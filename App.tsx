@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LessonParams, SavedLesson } from './types';
+import { supabase } from './lib/supabase';
 import Header from './components/Header';
 import LessonForm from './components/LessonForm';
 import LessonResult from './components/LessonResult';
@@ -45,16 +46,64 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<SavedLesson[]>([]);
 
   useEffect(() => {
-    const savedFavs = localStorage.getItem('manana_favorites');
-    if (savedFavs) {
-      try { setFavorites(JSON.parse(savedFavs)); } catch (e) {}
-    }
-    const savedEmail = localStorage.getItem('manana_user_email');
-    if (savedEmail) setUserEmail(savedEmail);
-    const savedPro = localStorage.getItem('manana_pro_status');
-    if (savedPro === 'true') setIsPro(true);
-    const savedGens = localStorage.getItem('manana_total_generations');
-    if (savedGens) setTotalGenerations(parseInt(savedGens, 10));
+    const loadData = async () => {
+      // Intentar cargar sesión de Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserEmail(session.user.email ?? null);
+        
+        // Cargar lecciones desde Supabase
+        const { data: lessons, error } = await supabase
+          .from('saved_lessons')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (!error && lessons) {
+          setFavorites(lessons.map(l => ({
+            ...l,
+            createdAt: new Date(l.created_at).getTime()
+          })));
+        }
+
+        // Cargar datos de usuario (pro, generaciones)
+        const { data: userData } = await supabase
+          .from('users')
+          .select('is_pro, total_generations')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (userData) {
+          setIsPro(userData.is_pro);
+          setTotalGenerations(userData.total_generations);
+        }
+      } else {
+        // Fallback a localStorage si no hay sesión
+        const savedFavs = localStorage.getItem('manana_favorites');
+        if (savedFavs) {
+          try { setFavorites(JSON.parse(savedFavs)); } catch (e) {}
+        }
+        const savedEmail = localStorage.getItem('manana_user_email');
+        if (savedEmail) setUserEmail(savedEmail);
+        const savedPro = localStorage.getItem('manana_pro_status');
+        if (savedPro === 'true') setIsPro(true);
+        const savedGens = localStorage.getItem('manana_total_generations');
+        if (savedGens) setTotalGenerations(parseInt(savedGens, 10));
+      }
+    };
+
+    loadData();
+
+    // Escuchar cambios en la autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUserEmail(session.user.email ?? null);
+      } else {
+        setUserEmail(null);
+        setIsPro(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleUpgradeClick = () => {
@@ -87,6 +136,15 @@ const App: React.FC = () => {
       setTotalGenerations(newTotal);
       localStorage.setItem('manana_total_generations', newTotal.toString());
 
+      // Actualizar en Supabase si está logueado
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase
+          .from('users')
+          .update({ total_generations: newTotal })
+          .eq('id', session.user.id);
+      }
+
       setTimeout(() => {
         window.scrollTo({ top: 350, behavior: 'smooth' });
       }, 100);
@@ -114,7 +172,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUserEmail(null);
     localStorage.removeItem('manana_user_email');
     setIsPro(false);
@@ -153,7 +212,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!result) return;
 
     if (!userEmail && !isPro) {
@@ -174,6 +233,32 @@ const App: React.FC = () => {
       content: result,
       createdAt: Date.now()
     };
+
+    // Guardar en Supabase si hay sesión
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data, error } = await supabase
+        .from('saved_lessons')
+        .insert([{
+          user_id: session.user.id,
+          topic: params.topic,
+          grade: params.grade,
+          duration: params.duration,
+          status: params.status,
+          tone: params.tone,
+          group_size: params.groupSize,
+          narrative: params.narrative,
+          custom_narrative: params.customNarrative,
+          content: result
+        }])
+        .select()
+        .single();
+      
+      if (!error && data) {
+        newFavorite.id = data.id;
+      }
+    }
+
     const updated = [newFavorite, ...favorites];
     setFavorites(updated);
     localStorage.setItem('manana_favorites', JSON.stringify(updated));
@@ -217,13 +302,27 @@ const App: React.FC = () => {
     }, 100);
   };
 
-  const handleDeleteLesson = (id: string) => {
+  const handleDeleteLesson = async (id: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await supabase
+        .from('saved_lessons')
+        .delete()
+        .eq('id', id);
+    }
     const updated = favorites.filter(f => f.id !== id);
     setFavorites(updated);
     localStorage.setItem('manana_favorites', JSON.stringify(updated));
   };
 
-  const handleRenameLesson = (id: string, newTitle: string) => {
+  const handleRenameLesson = async (id: string, newTitle: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await supabase
+        .from('saved_lessons')
+        .update({ topic: newTitle })
+        .eq('id', id);
+    }
     const updated = favorites.map(f => f.id === id ? { ...f, topic: newTitle } : f);
     setFavorites(updated);
     localStorage.setItem('manana_favorites', JSON.stringify(updated));
