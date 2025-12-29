@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -18,40 +18,72 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
 
-    // Simulación de persistencia local para el MVP
-    const users = JSON.parse(localStorage.getItem('manana_mock_users') || '{}');
-
-    setTimeout(() => {
+    try {
       if (mode === 'register') {
-        if (users[email]) {
-          setMessage({ type: 'error', text: 'Este correo ya está registrado.' });
-        } else {
-          users[email] = password;
-          localStorage.setItem('manana_mock_users', JSON.stringify(users));
-          setMessage({ type: 'success', text: '¡Cuenta creada con éxito!' });
-          setTimeout(() => onAuthSuccess(email), 1000);
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (error) {
+          if (error.message.includes('already registered')) {
+            setMessage({ type: 'error', text: 'Este correo ya está registrado.' });
+          } else {
+            setMessage({ type: 'error', text: error.message });
+          }
+        } else if (data.user) {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([{
+              id: data.user.id,
+              email: data.user.email,
+              is_pro: false,
+              total_generations: 0
+            }]);
+
+          if (insertError && !insertError.message.includes('duplicate')) {
+            console.error('Error creating user record:', insertError);
+          }
+
+          if (data.session) {
+            setMessage({ type: 'success', text: '¡Cuenta creada con éxito!' });
+            setTimeout(() => onAuthSuccess(email), 1000);
+          } else {
+            setMessage({ type: 'success', text: '¡Cuenta creada! Revisa tu correo para confirmar tu cuenta.' });
+          }
         }
       } else if (mode === 'login') {
-        if (users[email] && users[email] === password) {
-          onAuthSuccess(email);
-        } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
           setMessage({ type: 'error', text: 'Correo o contraseña incorrectos.' });
+        } else if (data.user) {
+          onAuthSuccess(data.user.email || email);
         }
       } else if (mode === 'forgot') {
-        if (users[email]) {
-          setMessage({ type: 'success', text: 'Te hemos enviado un enlace para restablecer tu contraseña a ' + email });
-          // En un entorno real, aquí se llamaría a la API de envío de correos
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+
+        if (error) {
+          setMessage({ type: 'error', text: 'No pudimos enviar el correo. Intenta de nuevo.' });
         } else {
-          setMessage({ type: 'error', text: 'No encontramos ninguna cuenta con ese correo.' });
+          setMessage({ type: 'success', text: 'Te hemos enviado un enlace para restablecer tu contraseña a ' + email });
         }
       }
-      setIsSubmitting(false);
-    }, 800);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: 'Ocurrió un error. Intenta de nuevo.' });
+    }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -102,6 +134,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  minLength={6}
                   className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none font-medium transition-all"
                 />
               </div>
