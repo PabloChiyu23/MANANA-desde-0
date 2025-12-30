@@ -1,11 +1,8 @@
 
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 import { LessonParams } from "../types";
 
-const groq = new Groq({ 
-  apiKey: (process as any).env.GROQ_API_KEY || '',
-  dangerouslyAllowBrowser: true
-});
+const ai = new GoogleGenAI({ apiKey: (process as any).env.GEMINI_API_KEY || '' });
 
 export const generateLessonContent = async (params: LessonParams): Promise<string> => {
   const chosenNarrative = params.narrative === 'Personalizada' ? params.customNarrative : params.narrative;
@@ -104,17 +101,17 @@ export const generateLessonContent = async (params: LessonParams): Promise<strin
   const prompt = `Genera la planeación para el tema "${params.topic}" dirigida a ${params.grade} con un enfoque ${params.tone}. El grupo está ${params.status}. Usa la narrativa: ${chosenNarrative || 'libre'}.`;
 
   try {
-    const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.8,
-      max_tokens: 4000,
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.8,
+        maxOutputTokens: 4000,
+      }
     });
 
-    const text = response.choices[0]?.message?.content || "";
+    const text = response.text || "";
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       throw new Error("CONTENIDO_INAPROPIADO");
     }
@@ -140,17 +137,17 @@ export const generatePlanBContent = async (params: LessonParams): Promise<string
   const prompt = `Genera un Plan B de emergencia con un estilo práctico.`;
 
   try {
-    const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.9,
-      max_tokens: 2000,
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.9,
+        maxOutputTokens: 2000,
+      }
     });
     
-    const text = response.choices[0]?.message?.content || "";
+    const text = response.text || "";
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       throw new Error("CONTENIDO_INAPROPIADO");
     }
