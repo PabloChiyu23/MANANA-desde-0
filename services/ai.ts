@@ -2,7 +2,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { LessonParams } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.GEMINI_API_KEY || (process as any).env.GEMINI_API_KEY || '' });
+const apiKey = (process as any).env.GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY || '';
+const ai = new GoogleGenAI({ apiKey });
 
 export const generateLessonContent = async (params: LessonParams): Promise<string> => {
   const chosenNarrative = params.narrative === 'Personalizada' ? params.customNarrative : params.narrative;
@@ -118,6 +119,7 @@ export const generateLessonContent = async (params: LessonParams): Promise<strin
     }
     return text || "No pude generar la clase.";
   } catch (error: any) {
+    console.error("Error de generación:", error);
     if (error.message === "CONTENIDO_INAPROPIADO") {
       throw new Error("El tema o la narrativa elegida no es apta para un entorno escolar por razones de seguridad.");
     }
