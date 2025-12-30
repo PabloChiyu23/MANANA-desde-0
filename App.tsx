@@ -346,7 +346,8 @@ const App: React.FC = () => {
       {view === 'pro' ? (
         <ProPanel 
           isPro={isPro} 
-          favorites={favorites} 
+          favorites={favorites}
+          totalGenerations={totalGenerations}
           onBack={() => setView('generator')}
           onUpgrade={handleUpgradeClick}
           onCancelSubscription={handleCancelClick}

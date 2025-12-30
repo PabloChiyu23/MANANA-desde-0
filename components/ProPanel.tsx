@@ -6,6 +6,7 @@ import FavoriteLessons from './FavoriteLessons';
 interface ProPanelProps {
   isPro: boolean;
   favorites: SavedLesson[];
+  totalGenerations: number;
   onBack: () => void;
   onUpgrade: () => void;
   onCancelSubscription: () => void;
@@ -18,6 +19,7 @@ interface ProPanelProps {
 const ProPanel: React.FC<ProPanelProps> = ({ 
   isPro, 
   favorites, 
+  totalGenerations,
   onBack, 
   onUpgrade, 
   onCancelSubscription,
@@ -26,7 +28,7 @@ const ProPanel: React.FC<ProPanelProps> = ({
   onRenameLesson,
   onLogout
 }) => {
-  const classesGenerated = favorites.length;
+  const classesGenerated = totalGenerations;
   const timeSaved = classesGenerated * 45;
 
   return (
