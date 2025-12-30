@@ -1,24 +1,57 @@
-
 import React, { useState } from 'react';
 
 interface PaymentModalProps {
   isOpen: boolean;
+  userId: string | null;
+  userEmail: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [step, setStep] = useState<'info' | 'loading'>('info');
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, onClose, onSuccess }) => {
+  const [step, setStep] = useState<'info' | 'loading' | 'error'>('info');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   if (!isOpen) return null;
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    if (!userId) {
+      setErrorMessage('Debes iniciar sesión para continuar');
+      setStep('error');
+      return;
+    }
+
     setStep('loading');
-    // Simulate Mercado Pago Redirect / Process
-    setTimeout(() => {
-      onSuccess();
-      setStep('info');
-    }, 2500);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/create-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, userEmail }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al crear preferencia de pago');
+      }
+
+      const data = await response.json();
+      
+      if (data.initPoint) {
+        window.location.href = data.initPoint;
+      } else if (data.sandboxInitPoint) {
+        window.location.href = data.sandboxInitPoint;
+      } else {
+        throw new Error('No se pudo obtener el enlace de pago');
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      setErrorMessage(error.message || 'Error al procesar el pago');
+      setStep('error');
+    }
   };
 
   return (
@@ -91,15 +124,29 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess 
                  </div>
               </div>
             </>
-          ) : (
+          ) : step === 'loading' ? (
             <div className="py-12 text-center">
               <div className="relative w-20 h-20 mx-auto mb-8">
                 <div className="absolute inset-0 border-4 border-blue-50 rounded-full"></div>
                 <div className="absolute inset-0 border-4 border-[#009EE3] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <h3 className="text-2xl font-black text-gray-800 mb-2">PROCESANDO...</h3>
-              <p className="text-gray-500 font-medium px-4">Estamos conectando con Mercado Pago para activar tu cuenta PRO.</p>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">CONECTANDO...</h3>
+              <p className="text-gray-500 font-medium px-4">Estamos preparando tu pago seguro con Mercado Pago.</p>
               <p className="text-[10px] text-gray-400 mt-8 uppercase font-bold tracking-tighter italic">No cierres esta ventana</p>
+            </div>
+          ) : (
+            <div className="py-12 text-center">
+              <div className="w-20 h-20 mx-auto mb-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-4xl">❌</span>
+              </div>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">ERROR</h3>
+              <p className="text-gray-500 font-medium px-4 mb-6">{errorMessage}</p>
+              <button
+                onClick={() => setStep('info')}
+                className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all"
+              >
+                Intentar de nuevo
+              </button>
             </div>
           )}
         </div>

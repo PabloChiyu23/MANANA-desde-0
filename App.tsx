@@ -20,6 +20,7 @@ const MAX_FREE_FAVORITES = 3;
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'generator' | 'pro'>('landing');
   const [isPro, setIsPro] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
@@ -46,10 +47,35 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<SavedLesson[]>([]);
 
   useEffect(() => {
+    // Manejar retorno de Mercado Pago
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus === 'success') {
+      console.log('PAYMENT SUCCESS DETECTED FROM URL');
+      // Limpiar URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // El webhook ya actualizó Supabase, solo mostrar mensaje
+      alert('¡Pago exitoso! Tu cuenta PRO se activará en unos segundos.');
+      // Recargar datos del usuario
+      setTimeout(() => window.location.reload(), 1500);
+    } else if (paymentStatus === 'failure') {
+      console.log('PAYMENT FAILURE DETECTED FROM URL');
+      window.history.replaceState({}, '', window.location.pathname);
+      alert('El pago no se pudo completar. Por favor intenta de nuevo.');
+    } else if (paymentStatus === 'pending') {
+      console.log('PAYMENT PENDING DETECTED FROM URL');
+      window.history.replaceState({}, '', window.location.pathname);
+      alert('Tu pago está pendiente de confirmación. Te notificaremos cuando se complete.');
+    }
+  }, []);
+
+  useEffect(() => {
     const loadData = async () => {
       // Intentar cargar sesión de Supabase
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
         
         // Cargar lecciones desde Supabase
@@ -98,6 +124,7 @@ const App: React.FC = () => {
       console.log('AUTH STATE CHANGE:', _event, session?.user?.email);
       
       if (session?.user) {
+        setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
         
         // Recargar datos del usuario desde Supabase al iniciar sesión
@@ -154,6 +181,7 @@ const App: React.FC = () => {
       } else {
         // Al cerrar sesión, NO resetear totalGenerations para usuarios no logueados
         // Solo limpiar datos de sesión
+        setUserId(null);
         setUserEmail(null);
         setIsPro(false);
         // Cargar desde localStorage para usuarios sin cuenta
@@ -240,6 +268,7 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setUserId(null);
     setUserEmail(null);
     localStorage.removeItem('manana_user_email');
     setIsPro(false);
@@ -567,7 +596,9 @@ const App: React.FC = () => {
       )}
 
       <PaymentModal 
-        isOpen={isPaymentModalOpen} 
+        isOpen={isPaymentModalOpen}
+        userId={userId}
+        userEmail={userEmail}
         onClose={() => setIsPaymentModalOpen(false)} 
         onSuccess={handlePaymentSuccess} 
       />
