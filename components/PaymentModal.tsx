@@ -40,9 +40,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
 
       const data = await response.json();
       
-      // En modo pruebas, usar sandboxInitPoint primero
-      // En producción con credenciales reales, usar initPoint
-      const paymentUrl = data.sandboxInitPoint || data.initPoint;
+      // Usar initPoint para producción, sandboxInitPoint como fallback para pruebas
+      const paymentUrl = data.initPoint || data.sandboxInitPoint;
       
       if (paymentUrl) {
         window.location.href = paymentUrl;
