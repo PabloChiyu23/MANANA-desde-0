@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 interface LessonParams {
   grade: string;
@@ -30,17 +32,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       Aplica las mismas reglas de seguridad: Si el tema es violento o inapropiado, responde "SEGURIDAD_BLOQUEADA".
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: "Genera un Plan B de emergencia con un estilo práctico.",
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.9,
-        maxOutputTokens: 2000,
-      },
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: "Genera un Plan B de emergencia con un estilo práctico." }
+      ],
+      temperature: 0.9,
+      max_tokens: 2000,
     });
     
-    const text = response.text || "";
+    const text = response.choices[0]?.message?.content || "";
     
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       return res.status(400).json({ error: "Contenido bloqueado por seguridad." });
