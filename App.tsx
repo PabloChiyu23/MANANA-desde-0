@@ -94,9 +94,33 @@ const App: React.FC = () => {
     loadData();
 
     // Escuchar cambios en la autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUserEmail(session.user.email ?? null);
+        
+        // Cargar datos del usuario desde Supabase
+        const { data: lessons } = await supabase
+          .from('saved_lessons')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (lessons) {
+          setFavorites(lessons.map(l => ({
+            ...l,
+            createdAt: new Date(l.created_at).getTime()
+          })));
+        }
+
+        const { data: userData } = await supabase
+          .from('users')
+          .select('is_pro, total_generations')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (userData) {
+          setIsPro(userData.is_pro);
+          setTotalGenerations(userData.total_generations);
+        }
       } else {
         setUserEmail(null);
         setIsPro(false);
