@@ -40,10 +40,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
 
       const data = await response.json();
       
-      if (data.initPoint) {
-        window.location.href = data.initPoint;
-      } else if (data.sandboxInitPoint) {
-        window.location.href = data.sandboxInitPoint;
+      // En modo pruebas, usar sandboxInitPoint primero
+      // En producción con credenciales reales, usar initPoint
+      const paymentUrl = data.sandboxInitPoint || data.initPoint;
+      
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
       } else {
         throw new Error('No se pudo obtener el enlace de pago');
       }
