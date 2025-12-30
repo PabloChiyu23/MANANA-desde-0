@@ -1,11 +1,7 @@
-import express from 'express';
+import express, { Router } from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
 import { createServer as createViteServer } from 'vite';
-
-const app = express();
-app.use(cors());
-app.use(express.json());
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -23,7 +19,10 @@ interface LessonParams {
   customNarrative?: string;
 }
 
-app.post('/api/generate-lesson', async (req, res) => {
+const apiRouter = Router();
+
+apiRouter.post('/generate-lesson', async (req, res) => {
+  console.log('API: Received generate-lesson request');
   try {
     const params: LessonParams = req.body;
     
@@ -138,6 +137,7 @@ app.post('/api/generate-lesson', async (req, res) => {
       return res.status(400).json({ error: "El tema o la narrativa elegida no es apta para un entorno escolar por razones de seguridad." });
     }
     
+    console.log('API: Successfully generated lesson');
     res.json({ content: text || "No pude generar la clase." });
   } catch (error: any) {
     console.error("Error de generación:", error);
@@ -145,7 +145,8 @@ app.post('/api/generate-lesson', async (req, res) => {
   }
 });
 
-app.post('/api/generate-planb', async (req, res) => {
+apiRouter.post('/generate-planb', async (req, res) => {
+  console.log('API: Received generate-planb request');
   try {
     const params: LessonParams = req.body;
     
@@ -173,6 +174,7 @@ app.post('/api/generate-planb', async (req, res) => {
       return res.status(400).json({ error: "Contenido bloqueado por seguridad." });
     }
     
+    console.log('API: Successfully generated Plan B');
     res.json({ content: text });
   } catch (error) {
     console.error("Error Plan B:", error);
@@ -181,8 +183,25 @@ app.post('/api/generate-planb', async (req, res) => {
 });
 
 async function startServer() {
+  const app = express();
+  
+  app.use(cors());
+  app.use(express.json());
+  
+  app.use('/api', apiRouter);
+  
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
+  });
+
   const vite = await createViteServer({
-    server: { middlewareMode: true },
+    server: { 
+      middlewareMode: true,
+      hmr: {
+        clientPort: 443,
+        protocol: 'wss',
+      }
+    },
     appType: 'spa'
   });
   
@@ -190,6 +209,7 @@ async function startServer() {
   
   app.listen(5000, '0.0.0.0', () => {
     console.log('Server running on port 5000');
+    console.log('API routes: /api/generate-lesson, /api/generate-planb, /api/health');
   });
 }
 
