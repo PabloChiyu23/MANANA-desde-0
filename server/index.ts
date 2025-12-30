@@ -1,12 +1,9 @@
 import express, { Router } from 'express';
 import cors from 'cors';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface LessonParams {
   grade: string;
@@ -121,17 +118,17 @@ apiRouter.post('/generate-lesson', async (req, res) => {
 
     const prompt = `Genera la planeación para el tema "${params.topic}" dirigida a ${params.grade} con un enfoque ${params.tone}. El grupo está ${params.status}. Usa la narrativa: ${chosenNarrative || 'libre'}.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.8,
-      max_tokens: 4000,
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.8,
+        maxOutputTokens: 4000,
+      },
     });
 
-    const text = response.choices[0]?.message?.content || "";
+    const text = response.text || "";
     
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       return res.status(400).json({ error: "El tema o la narrativa elegida no es apta para un entorno escolar por razones de seguridad." });
@@ -158,17 +155,17 @@ apiRouter.post('/generate-planb', async (req, res) => {
       Aplica las mismas reglas de seguridad: Si el tema es violento o inapropiado, responde "SEGURIDAD_BLOQUEADA".
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: "Genera un Plan B de emergencia con un estilo práctico." }
-      ],
-      temperature: 0.9,
-      max_tokens: 2000,
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: "Genera un Plan B de emergencia con un estilo práctico.",
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.9,
+        maxOutputTokens: 2000,
+      },
     });
     
-    const text = response.choices[0]?.message?.content || "";
+    const text = response.text || "";
     
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       return res.status(400).json({ error: "Contenido bloqueado por seguridad." });
