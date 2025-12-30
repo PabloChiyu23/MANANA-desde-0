@@ -105,11 +105,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ received: true, status: payment.status });
     }
 
-    const userId = payment.external_reference;
-    if (!userId) {
-      console.error('No user ID in external_reference');
+    const externalReference = payment.external_reference;
+    if (!externalReference) {
+      console.error('No external_reference in payment');
       return res.status(400).json({ error: 'Missing user reference' });
     }
+
+    const [userId, planId] = externalReference.includes('|') 
+      ? externalReference.split('|') 
+      : [externalReference, 'unknown'];
+
+    console.log('PAYMENT INFO:', { userId, planId, amount: payment.transaction_amount });
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -117,6 +123,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('users')
       .update({
         is_pro: true,
+        subscription_plan: planId,
+        subscription_amount: payment.transaction_amount,
+        subscription_date: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
