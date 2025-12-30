@@ -26,8 +26,8 @@ const ProPanel: React.FC<ProPanelProps> = ({
   onRenameLesson,
   onLogout
 }) => {
-  const classesGenerated = favorites.length + 5; // Simulación de uso
-  const timeSaved = classesGenerated * 45; // 45 mins ahorrados por clase
+  const classesGenerated = favorites.length;
+  const timeSaved = classesGenerated * 45;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
