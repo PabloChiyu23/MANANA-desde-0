@@ -184,7 +184,10 @@ const App: React.FC = () => {
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
+    console.log('DEBUG handleGenerate:', { isPro, totalGenerations, userEmail, limit: FREE_WITHOUT_EMAIL_LIMIT });
+    
     if (!isPro && totalGenerations >= FREE_WITHOUT_EMAIL_LIMIT && !userEmail) {
+      console.log('DEBUG: Blocking - needs login');
       setIsPendingGeneration(true);
       setIsAuthModalOpen(true);
       return;
