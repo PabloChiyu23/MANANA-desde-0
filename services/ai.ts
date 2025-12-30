@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { LessonParams } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: (process as any).env.GEMINI_API_KEY || '' });
+const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || '' });
 
 export const generateLessonContent = async (params: LessonParams): Promise<string> => {
   const chosenNarrative = params.narrative === 'Personalizada' ? params.customNarrative : params.narrative;
