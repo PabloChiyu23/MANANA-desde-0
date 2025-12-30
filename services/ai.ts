@@ -1,9 +1,11 @@
 
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { LessonParams } from "../types";
 
-const apiKey = (process as any).env.GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+const groq = new Groq({ 
+  apiKey: (process as any).env.GROQ_API_KEY || '',
+  dangerouslyAllowBrowser: true
+});
 
 export const generateLessonContent = async (params: LessonParams): Promise<string> => {
   const chosenNarrative = params.narrative === 'Personalizada' ? params.customNarrative : params.narrative;
@@ -63,7 +65,7 @@ export const generateLessonContent = async (params: LessonParams): Promise<strin
     – Acción concreta 3
 
     Qué decir:
-    “Frase literal breve y motivadora para iniciar la sesión bajo la narrativa”
+    "Frase literal breve y motivadora para iniciar la sesión bajo la narrativa"
 
     ---
 
@@ -102,18 +104,17 @@ export const generateLessonContent = async (params: LessonParams): Promise<strin
   const prompt = `Genera la planeación para el tema "${params.topic}" dirigida a ${params.grade} con un enfoque ${params.tone}. El grupo está ${params.status}. Usa la narrativa: ${chosenNarrative || 'libre'}.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: { 
-        systemInstruction, 
-        temperature: 0.8,
-        // Nota: Los filtros de seguridad estándar de Gemini ya actúan, 
-        // pero reforzamos con la instrucción de sistema.
-      },
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.8,
+      max_tokens: 4000,
     });
 
-    const text = response.text || "";
+    const text = response.choices[0]?.message?.content || "";
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       throw new Error("CONTENIDO_INAPROPIADO");
     }
@@ -139,12 +140,17 @@ export const generatePlanBContent = async (params: LessonParams): Promise<string
   const prompt = `Genera un Plan B de emergencia con un estilo práctico.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: { systemInstruction, temperature: 0.9 },
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.9,
+      max_tokens: 2000,
     });
-    const text = response.text || "";
+    
+    const text = response.choices[0]?.message?.content || "";
     if (text.includes("SEGURIDAD_BLOQUEADA")) {
       throw new Error("CONTENIDO_INAPROPIADO");
     }
