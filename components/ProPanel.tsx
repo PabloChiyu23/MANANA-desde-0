@@ -7,6 +7,7 @@ interface ProPanelProps {
   isPro: boolean;
   favorites: SavedLesson[];
   totalGenerations: number;
+  userEmail: string | null;
   onBack: () => void;
   onUpgrade: () => void;
   onCancelSubscription: () => void;
@@ -20,6 +21,7 @@ const ProPanel: React.FC<ProPanelProps> = ({
   isPro, 
   favorites, 
   totalGenerations,
+  userEmail,
   onBack, 
   onUpgrade, 
   onCancelSubscription,
@@ -50,6 +52,18 @@ const ProPanel: React.FC<ProPanelProps> = ({
           </svg>
         </button>
       </div>
+
+      {userEmail && (
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <span className="text-xl font-black text-green-700 uppercase">{userEmail.charAt(0)}</span>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-widest">Cuenta registrada</p>
+            <p className="text-gray-800 font-bold">{userEmail}</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">

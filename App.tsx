@@ -364,6 +364,7 @@ const App: React.FC = () => {
           isPro={isPro} 
           favorites={favorites}
           totalGenerations={totalGenerations}
+          userEmail={userEmail}
           onBack={() => setView('generator')}
           onUpgrade={handleUpgradeClick}
           onCancelSubscription={handleCancelClick}
