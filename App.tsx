@@ -178,6 +178,10 @@ const App: React.FC = () => {
     localStorage.removeItem('manana_user_email');
     setIsPro(false);
     localStorage.removeItem('manana_pro_status');
+    setTotalGenerations(0);
+    localStorage.removeItem('manana_total_generations');
+    setFavorites([]);
+    localStorage.removeItem('manana_favorites');
     setView('landing');
   };
 
