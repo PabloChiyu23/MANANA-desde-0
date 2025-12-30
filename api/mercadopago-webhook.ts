@@ -24,12 +24,21 @@ function verifyMercadoPagoSignature(req: VercelRequest): boolean {
 
   for (const part of parts) {
     const [key, value] = part.split('=');
-    if (key === 'ts') ts = value;
-    if (key === 'v1') hash = value;
+    const trimmedKey = key?.trim();
+    const trimmedValue = value?.trim();
+    if (trimmedKey === 'ts') ts = trimmedValue;
+    if (trimmedKey === 'v1') hash = trimmedValue;
+  }
+
+  if (!ts || !hash) {
+    console.error('Could not parse ts or v1 from x-signature:', xSignature);
+    return false;
   }
 
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
   const expectedHash = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+  
+  console.log('SIGNATURE VERIFICATION:', { manifest, expectedHash, receivedHash: hash, match: hash === expectedHash });
 
   return hash === expectedHash;
 }

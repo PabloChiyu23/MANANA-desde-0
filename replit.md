@@ -7,16 +7,23 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 - **Frontend**: React 19 + TypeScript
 - **Build Tool**: Vite 6
 - **Styling**: Tailwind CSS (via CDN)
-- **AI**: Google Gemini API (@google/genai)
+- **AI**: OpenAI GPT-4o-mini (via Replit AI Integrations in dev, direct API in production)
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Payments**: Mercado Pago
 - **PDF Generation**: jsPDF
 
 ## Project Structure
 ```
 /
+├── api/                 # Vercel serverless functions
+│   ├── create-preference.ts    # Create Mercado Pago payment preference
+│   ├── generate-lesson.ts      # Lesson generation endpoint
+│   ├── generate-planb.ts       # Plan B generation endpoint
+│   └── mercadopago-webhook.ts  # Payment webhook handler
 ├── components/          # React components
 │   ├── AuthModal.tsx
 │   ├── CancellationModal.tsx
-│   ├── EmailModal.tsx
 │   ├── FavoriteLessons.tsx
 │   ├── Header.tsx
 │   ├── LandingPage.tsx
@@ -24,24 +31,70 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 │   ├── LessonResult.tsx
 │   ├── PaymentModal.tsx
 │   └── ProPanel.tsx
+├── lib/
+│   └── supabase.ts      # Supabase client
+├── server/
+│   └── index.ts         # Express dev server with Vite middleware
 ├── services/
-│   └── ai.ts           # Gemini AI service
-├── App.tsx             # Main app component
-├── index.tsx           # Entry point
-├── index.html          # HTML template
-├── types.ts            # TypeScript types
-├── vite.config.ts      # Vite configuration
+│   └── ai.ts            # AI service client
+├── App.tsx              # Main app component
+├── index.tsx            # Entry point
+├── index.html           # HTML template
+├── types.ts             # TypeScript types
+├── vite.config.ts       # Vite configuration
 └── package.json
 ```
 
 ## Environment Variables
-- `GEMINI_API_KEY`: Google Gemini API key for AI-powered lesson generation
+### Required Secrets
+- `MERCADOPAGO_ACCESS_TOKEN`: Mercado Pago API access token
+- `MERCADOPAGO_WEBHOOK_SECRET`: Mercado Pago webhook signature secret
+- `SUPABASE_SERVICE_KEY`: Supabase service role key (for server-side operations)
+
+### Frontend (VITE_ prefix)
+- `VITE_SUPABASE_URL`: Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Supabase anonymous key
+
+### Backend (Replit AI Integrations)
+- `AI_INTEGRATIONS_OPENAI_API_KEY`: Auto-provided by Replit
+- `AI_INTEGRATIONS_OPENAI_BASE_URL`: Auto-provided by Replit
+
+## Database Schema (Supabase)
+### users
+- `id` (uuid, primary key) - matches Supabase auth user id
+- `email` (varchar)
+- `is_pro` (bool) - PRO subscription status
+- `total_generations` (int4) - count of lessons generated
+- `created_at` (timestamptz)
+- `updated_at` (timestamptz)
+
+### saved_lessons
+- `id` (uuid, primary key)
+- `user_id` (uuid, foreign key to users)
+- `topic`, `grade`, `duration`, `status`, `tone`, etc.
+- `content` (text) - generated lesson content
+- `created_at` (timestamptz)
+
+## Free Tier Limits
+- Without account: 1 class
+- With account: 10 classes
+- PRO: Unlimited
+
+## Payment Flow
+1. User clicks "Upgrade to PRO"
+2. Frontend calls `/api/create-preference` with userId
+3. Backend creates Mercado Pago preference with `external_reference: userId`
+4. User is redirected to Mercado Pago checkout
+5. After payment, webhook at `/api/mercadopago-webhook` receives notification
+6. Webhook verifies signature and updates `users.is_pro = true`
+7. User redirected back with `?payment=success` and sees confirmation
 
 ## Development
 - **Port**: 5000
 - **Command**: `npm run dev`
 
 ## Deployment
-- **Type**: Static
+- **Platform**: Vercel
 - **Build**: `npm run build`
 - **Output**: `dist/`
+- Configure Mercado Pago webhook URL in their dashboard pointing to your Vercel domain
