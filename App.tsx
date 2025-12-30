@@ -385,6 +385,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteLesson = async (id: string) => {
+    console.log('DELETE LESSON - before:', { totalGenerations, favoritesCount: favorites.length });
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       await supabase
@@ -395,6 +396,7 @@ const App: React.FC = () => {
     const updated = favorites.filter(f => f.id !== id);
     setFavorites(updated);
     localStorage.setItem('manana_favorites', JSON.stringify(updated));
+    console.log('DELETE LESSON - after:', { totalGenerations, favoritesCount: updated.length });
   };
 
   const handleRenameLesson = async (id: string, newTitle: string) => {
