@@ -184,28 +184,36 @@ const App: React.FC = () => {
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    console.log('handleGenerate called:', { isPro, totalGenerations, userEmail, FREE_WITHOUT_EMAIL_LIMIT });
-    
     if (!isPro && totalGenerations >= FREE_WITHOUT_EMAIL_LIMIT && !userEmail) {
-      console.log('Blocking: requires login');
       setIsPendingGeneration(true);
       setIsAuthModalOpen(true);
       return;
     }
 
     if (!isPro && totalGenerations >= FREE_WITH_EMAIL_LIMIT) {
-      console.log('Blocking: requires PRO');
       setError("Has llegado al límite de 10 planeaciones gratuitas.");
       handleUpgradeClick();
       return;
     }
 
-    console.log('Proceeding with generation');
     executeGeneration(params);
   };
 
   const handleGeneratePlanB = async () => {
     if (isPlanBLoading) return;
+    
+    if (!isPro && totalGenerations >= FREE_WITHOUT_EMAIL_LIMIT && !userEmail) {
+      setIsPendingGeneration(true);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (!isPro && totalGenerations >= FREE_WITH_EMAIL_LIMIT) {
+      setError("Has llegado al límite de 10 planeaciones gratuitas.");
+      handleUpgradeClick();
+      return;
+    }
+    
     setIsPlanBLoading(true);
     try {
       const planB = await generatePlanBContent(params);
@@ -431,7 +439,7 @@ const App: React.FC = () => {
                   params={params}
                   isPro={isPro}
                   onSave={handleSave} 
-                  onRegenerate={() => executeGeneration(params)}
+                  onRegenerate={() => handleGenerate()}
                   onUpgrade={handleUpgradeClick}
                   onGeneratePlanB={handleGeneratePlanB}
                   isLoading={isLoading}
