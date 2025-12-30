@@ -112,21 +112,31 @@ const App: React.FC = () => {
         if (userData) {
           setIsPro(userData.is_pro);
           setTotalGenerations(userData.total_generations);
+          // Sincronizar localStorage con Supabase
+          localStorage.setItem('manana_total_generations', userData.total_generations.toString());
           console.log('SET TOTAL GENERATIONS TO:', userData.total_generations);
         } else if (userError?.code === 'PGRST116') {
-          // Usuario no existe en la tabla, crearlo
+          // Usuario no existe en la tabla, crearlo con las generaciones de localStorage
           console.log('USER NOT FOUND, CREATING...');
+          const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
           const { error: insertError } = await supabase
             .from('users')
             .insert({
               id: session.user.id,
               email: session.user.email,
               is_pro: false,
-              total_generations: 0
+              total_generations: localGens
             });
           console.log('INSERT RESULT:', insertError);
-          setIsPro(false);
-          setTotalGenerations(0);
+          if (!insertError) {
+            setIsPro(false);
+            setTotalGenerations(localGens);
+          }
+        } else if (userError) {
+          // Otro error de Supabase - intentar usar localStorage como fallback temporal
+          console.error('SUPABASE ERROR:', userError);
+          const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
+          setTotalGenerations(localGens);
         }
 
         // Cargar lecciones guardadas
@@ -142,9 +152,13 @@ const App: React.FC = () => {
           })));
         }
       } else {
+        // Al cerrar sesión, NO resetear totalGenerations para usuarios no logueados
+        // Solo limpiar datos de sesión
         setUserEmail(null);
         setIsPro(false);
-        setTotalGenerations(0);
+        // Cargar desde localStorage para usuarios sin cuenta
+        const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
+        setTotalGenerations(localGens);
         setFavorites([]);
       }
     });
@@ -185,10 +199,16 @@ const App: React.FC = () => {
       // Actualizar en Supabase si está logueado
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('users')
-          .update({ total_generations: newTotal })
+          .update({ total_generations: newTotal, updated_at: new Date().toISOString() })
           .eq('id', session.user.id);
+        
+        if (updateError) {
+          console.error('ERROR UPDATING GENERATIONS IN SUPABASE:', updateError);
+        } else {
+          console.log('UPDATED GENERATIONS IN SUPABASE TO:', newTotal);
+        }
       }
 
       setTimeout(() => {
