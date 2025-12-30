@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
+import { createServer as createViteServer } from 'vite';
 
 const app = express();
 app.use(cors());
@@ -179,7 +180,17 @@ app.post('/api/generate-planb', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+async function startServer() {
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'spa'
+  });
+  
+  app.use(vite.middlewares);
+  
+  app.listen(5000, '0.0.0.0', () => {
+    console.log('Server running on port 5000');
+  });
+}
+
+startServer();
