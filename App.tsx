@@ -347,9 +347,25 @@ const App: React.FC = () => {
     alert("¡Clase guardada en tu biblioteca!");
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     setIsPro(true);
     localStorage.setItem('manana_pro_status', 'true');
+    
+    // Guardar estado PRO en Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { error } = await supabase
+        .from('users')
+        .update({ is_pro: true, updated_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+      
+      if (error) {
+        console.error('ERROR SAVING PRO STATUS:', error);
+      } else {
+        console.log('PRO STATUS SAVED TO SUPABASE');
+      }
+    }
+    
     setIsPaymentModalOpen(false);
     alert("¡Bienvenido a MAÑANA PRO! 👑");
     setView('pro');
@@ -357,9 +373,25 @@ const App: React.FC = () => {
 
   const handleCancelClick = () => setIsCancelModalOpen(true);
 
-  const handleFinalCancel = (reason: string, feedback: string) => {
+  const handleFinalCancel = async (reason: string, feedback: string) => {
     setIsPro(false);
     localStorage.setItem('manana_pro_status', 'false');
+    
+    // Guardar cancelación en Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { error } = await supabase
+        .from('users')
+        .update({ is_pro: false, updated_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+      
+      if (error) {
+        console.error('ERROR CANCELING PRO STATUS:', error);
+      } else {
+        console.log('PRO STATUS CANCELED IN SUPABASE');
+      }
+    }
+    
     setIsCancelModalOpen(false);
     alert("Suscripción cancelada.");
     setView('generator');
