@@ -95,19 +95,38 @@ const App: React.FC = () => {
 
     // Escuchar cambios en la autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('AUTH STATE CHANGE:', _event, session?.user?.email);
+      
       if (session?.user) {
         setUserEmail(session.user.email ?? null);
         
         // Recargar datos del usuario desde Supabase al iniciar sesión
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('is_pro, total_generations')
           .eq('id', session.user.id)
           .single();
         
+        console.log('USER DATA FROM SUPABASE:', userData, 'ERROR:', userError);
+        
         if (userData) {
           setIsPro(userData.is_pro);
           setTotalGenerations(userData.total_generations);
+          console.log('SET TOTAL GENERATIONS TO:', userData.total_generations);
+        } else if (userError?.code === 'PGRST116') {
+          // Usuario no existe en la tabla, crearlo
+          console.log('USER NOT FOUND, CREATING...');
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: session.user.id,
+              email: session.user.email,
+              is_pro: false,
+              total_generations: 0
+            });
+          console.log('INSERT RESULT:', insertError);
+          setIsPro(false);
+          setTotalGenerations(0);
         }
 
         // Cargar lecciones guardadas
