@@ -40,9 +40,12 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ isOpen, onClose
         setMessage({ type: 'error', text: 'No pudimos actualizar tu contraseña. Intenta de nuevo.' });
       } else {
         setMessage({ type: 'success', text: '¡Contraseña actualizada con éxito!' });
+        // Limpiar el estado y cerrar
+        setPassword('');
+        setConfirmPassword('');
         setTimeout(() => {
+          setMessage(null);
           onSuccess();
-          onClose();
         }, 1500);
       }
     } catch (err) {

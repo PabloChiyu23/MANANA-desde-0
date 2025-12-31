@@ -49,6 +49,13 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<SavedLesson[]>([]);
 
   useEffect(() => {
+    // Detectar recuperación de contraseña desde el hash de Supabase INMEDIATAMENTE
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) {
+      console.log('PASSWORD RECOVERY DETECTED FROM URL HASH');
+      setIsResetPasswordModalOpen(true);
+    }
+
     // Manejar retorno de Mercado Pago
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
@@ -629,7 +636,6 @@ const App: React.FC = () => {
         onClose={() => setIsResetPasswordModalOpen(false)}
         onSuccess={() => {
           setIsResetPasswordModalOpen(false);
-          alert('¡Contraseña actualizada! Ya puedes iniciar sesión.');
         }}
       />
 
