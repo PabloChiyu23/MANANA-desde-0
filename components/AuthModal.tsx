@@ -58,14 +58,25 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           }
         }
       } else if (mode === 'login') {
+        console.log('LOGIN ATTEMPT:', email);
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
+        console.log('LOGIN RESULT:', { data, error });
+
         if (error) {
-          setMessage({ type: 'error', text: 'Correo o contraseña incorrectos.' });
+          console.error('LOGIN ERROR:', error.message, error.status);
+          if (error.message.includes('Invalid login')) {
+            setMessage({ type: 'error', text: 'Correo o contraseña incorrectos.' });
+          } else if (error.message.includes('Email not confirmed')) {
+            setMessage({ type: 'error', text: 'Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.' });
+          } else {
+            setMessage({ type: 'error', text: error.message });
+          }
         } else if (data.user) {
+          console.log('LOGIN SUCCESS:', data.user.email);
           onAuthSuccess(data.user.email || email);
         }
       } else if (mode === 'forgot') {
