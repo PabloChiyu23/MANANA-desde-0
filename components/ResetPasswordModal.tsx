@@ -18,6 +18,7 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ isOpen, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+    console.log('PASSWORD RESET SUBMIT CLICKED');
 
     if (password.length < 6) {
       setMessage({ type: 'error', text: 'La contraseña debe tener al menos 6 caracteres.' });
@@ -30,27 +31,35 @@ const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ isOpen, onClose
     }
 
     setIsSubmitting(true);
+    console.log('UPDATING PASSWORD...');
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { data, error } = await supabase.auth.updateUser({
         password: password
       });
 
+      console.log('UPDATE USER RESULT:', { data, error });
+
       if (error) {
-        setMessage({ type: 'error', text: 'No pudimos actualizar tu contraseña. Intenta de nuevo.' });
+        console.error('PASSWORD UPDATE ERROR:', error.message);
+        setMessage({ type: 'error', text: `Error: ${error.message}` });
+        setIsSubmitting(false);
       } else {
-        setMessage({ type: 'success', text: '¡Contraseña actualizada con éxito!' });
-        // Limpiar el estado y cerrar
+        console.log('PASSWORD UPDATED SUCCESSFULLY');
+        setMessage({ type: 'success', text: '¡Contraseña actualizada! Cerrando...' });
         setPassword('');
         setConfirmPassword('');
+        // Cerrar después de mostrar mensaje de éxito
         setTimeout(() => {
+          console.log('CLOSING MODAL');
           setMessage(null);
+          setIsSubmitting(false);
           onSuccess();
         }, 1500);
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Ocurrió un error. Intenta de nuevo.' });
-    } finally {
+    } catch (err: any) {
+      console.error('PASSWORD UPDATE EXCEPTION:', err);
+      setMessage({ type: 'error', text: `Error: ${err?.message || 'Intenta de nuevo.'}` });
       setIsSubmitting(false);
     }
   };
