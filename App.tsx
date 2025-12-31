@@ -283,13 +283,24 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUserId(null);
-    setUserEmail(null);
-    localStorage.removeItem('manana_user_email');
-    setIsPro(false);
-    localStorage.removeItem('manana_pro_status');
-    setView('landing');
+    console.log('LOGOUT CLICKED - Starting logout process');
+    try {
+      const { error } = await supabase.auth.signOut();
+      console.log('SIGN OUT RESULT:', error ? error.message : 'Success');
+      setUserId(null);
+      setUserEmail(null);
+      localStorage.removeItem('manana_user_email');
+      setIsPro(false);
+      localStorage.removeItem('manana_pro_status');
+      localStorage.removeItem('manana_total_generations');
+      localStorage.removeItem('manana_favorites');
+      setTotalGenerations(0);
+      setFavorites([]);
+      setView('landing');
+      console.log('LOGOUT COMPLETE');
+    } catch (err) {
+      console.error('LOGOUT ERROR:', err);
+    }
   };
 
   const handleGenerate = async (e?: React.FormEvent) => {
