@@ -32,6 +32,10 @@ const LessonResult: React.FC<LessonResultProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleCopy = () => {
+    if (!isPro) {
+      onUpgrade();
+      return;
+    }
     const textToCopy = planBContent ? `${content}\n\n--- PLAN B ---\n${planBContent}` : content;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
@@ -168,9 +172,11 @@ const LessonResult: React.FC<LessonResultProps> = ({
           </h3>
           <button
             onClick={handleCopy}
-            className="px-4 py-2 bg-white text-green-700 hover:bg-green-50 rounded-xl text-xs font-black uppercase transition-all shadow-md active:scale-95"
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all shadow-md active:scale-95 ${
+              isPro ? 'bg-white text-green-700 hover:bg-green-50' : 'bg-green-100 text-green-600'
+            }`}
           >
-            {copied ? "¡COPIADO!" : "COPIAR TODO"}
+            {copied ? "¡COPIADO!" : "COPIAR TODO"} {!isPro && '🔒'}
           </button>
         </div>
 
