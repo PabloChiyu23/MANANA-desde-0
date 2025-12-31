@@ -138,6 +138,12 @@ const App: React.FC = () => {
         setIsResetPasswordModalOpen(false);
       }
       
+      // Cerrar el modal de login cuando el usuario inicia sesión
+      if (_event === 'SIGNED_IN' && session?.user) {
+        console.log('SIGNED_IN EVENT - Closing auth modal');
+        setIsAuthModalOpen(false);
+      }
+      
       if (session?.user) {
         setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
