@@ -145,59 +145,75 @@ const App: React.FC = () => {
       }
       
       if (session?.user) {
+        console.log('LOADING USER DATA FOR:', session.user.email);
         setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
         
         // Recargar datos del usuario desde Supabase al iniciar sesión
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('is_pro, total_generations')
-          .eq('id', session.user.id)
-          .single();
-        
-        console.log('USER DATA FROM SUPABASE:', userData, 'ERROR:', userError);
-        
-        if (userData) {
-          setIsPro(userData.is_pro);
-          setTotalGenerations(userData.total_generations);
-          // Sincronizar localStorage con Supabase
-          localStorage.setItem('manana_total_generations', userData.total_generations.toString());
-          console.log('SET TOTAL GENERATIONS TO:', userData.total_generations);
-        } else if (userError?.code === 'PGRST116') {
-          // Usuario no existe en la tabla, crearlo con las generaciones de localStorage
-          console.log('USER NOT FOUND, CREATING...');
-          const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
-          const { error: insertError } = await supabase
+        try {
+          const userQueryPromise = supabase
             .from('users')
-            .insert({
-              id: session.user.id,
-              email: session.user.email,
-              is_pro: false,
-              total_generations: localGens
-            });
-          console.log('INSERT RESULT:', insertError);
-          if (!insertError) {
-            setIsPro(false);
+            .select('is_pro, total_generations')
+            .eq('id', session.user.id)
+            .single();
+          
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout')), 5000)
+          );
+          
+          const result = await Promise.race([userQueryPromise, timeoutPromise]) as any;
+          const userData = result.data;
+          const userError = result.error;
+          
+          console.log('USER DATA FROM SUPABASE:', userData, 'ERROR:', userError);
+        
+          if (userData) {
+            setIsPro(userData.is_pro);
+            setTotalGenerations(userData.total_generations);
+            // Sincronizar localStorage con Supabase
+            localStorage.setItem('manana_total_generations', userData.total_generations.toString());
+            console.log('SET TOTAL GENERATIONS TO:', userData.total_generations);
+          } else if (userError?.code === 'PGRST116') {
+            // Usuario no existe en la tabla, crearlo con las generaciones de localStorage
+            console.log('USER NOT FOUND, CREATING...');
+            const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert({
+                id: session.user.id,
+                email: session.user.email,
+                is_pro: false,
+                total_generations: localGens
+              });
+            console.log('INSERT RESULT:', insertError);
+            if (!insertError) {
+              setIsPro(false);
+              setTotalGenerations(localGens);
+            }
+          } else if (userError) {
+            // Otro error de Supabase - intentar usar localStorage como fallback temporal
+            console.error('SUPABASE ERROR:', userError);
+            const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
             setTotalGenerations(localGens);
           }
-        } else if (userError) {
-          // Otro error de Supabase - intentar usar localStorage como fallback temporal
-          console.error('SUPABASE ERROR:', userError);
+
+          // Cargar lecciones guardadas
+          const { data: lessons } = await supabase
+            .from('saved_lessons')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (lessons) {
+            setFavorites(lessons.map(l => ({
+              ...l,
+              createdAt: new Date(l.created_at).getTime()
+            })));
+          }
+        } catch (err) {
+          console.error('ERROR LOADING USER DATA:', err);
+          // Fallback a localStorage
           const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
           setTotalGenerations(localGens);
-        }
-
-        // Cargar lecciones guardadas
-        const { data: lessons } = await supabase
-          .from('saved_lessons')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (lessons) {
-          setFavorites(lessons.map(l => ({
-            ...l,
-            createdAt: new Date(l.created_at).getTime()
-          })));
         }
       } else {
         // Al cerrar sesión, NO resetear totalGenerations para usuarios no logueados
