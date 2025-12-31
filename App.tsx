@@ -283,22 +283,31 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     console.log('LOGOUT CLICKED - Starting logout process');
+    
+    // Limpiar estado local inmediatamente
+    setUserId(null);
+    setUserEmail(null);
+    setIsPro(false);
+    setTotalGenerations(0);
+    setFavorites([]);
+    localStorage.removeItem('manana_user_email');
+    localStorage.removeItem('manana_pro_status');
+    localStorage.removeItem('manana_total_generations');
+    localStorage.removeItem('manana_favorites');
+    setView('landing');
+    console.log('LOCAL STATE CLEARED');
+    
+    // Intentar cerrar sesión en Supabase (con timeout)
     try {
-      const { error } = await supabase.auth.signOut();
-      console.log('SIGN OUT RESULT:', error ? error.message : 'Success');
-      setUserId(null);
-      setUserEmail(null);
-      localStorage.removeItem('manana_user_email');
-      setIsPro(false);
-      localStorage.removeItem('manana_pro_status');
-      localStorage.removeItem('manana_total_generations');
-      localStorage.removeItem('manana_favorites');
-      setTotalGenerations(0);
-      setFavorites([]);
-      setView('landing');
-      console.log('LOGOUT COMPLETE');
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      );
+      
+      await Promise.race([signOutPromise, timeoutPromise]);
+      console.log('SUPABASE SIGN OUT COMPLETE');
     } catch (err) {
-      console.error('LOGOUT ERROR:', err);
+      console.log('SUPABASE SIGN OUT SKIPPED (timeout or error):', err);
     }
   };
 
