@@ -132,6 +132,12 @@ const App: React.FC = () => {
         return;
       }
       
+      // Cerrar el modal de contraseña cuando se actualiza el usuario (respaldo)
+      if (_event === 'USER_UPDATED') {
+        console.log('USER_UPDATED EVENT - Closing password modal');
+        setIsResetPasswordModalOpen(false);
+      }
+      
       if (session?.user) {
         setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
