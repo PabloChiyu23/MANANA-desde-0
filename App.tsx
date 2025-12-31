@@ -11,6 +11,7 @@ import ProPanel from './components/ProPanel';
 import PaymentModal from './components/PaymentModal';
 import CancellationModal from './components/CancellationModal';
 import AuthModal from './components/AuthModal';
+import ResetPasswordModal from './components/ResetPasswordModal';
 import { generateLessonContent, generatePlanBContent } from './services/ai';
 
 const FREE_WITHOUT_EMAIL_LIMIT = 1;
@@ -25,6 +26,7 @@ const App: React.FC = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState<boolean>(false);
   const [isPendingGeneration, setIsPendingGeneration] = useState<boolean>(false);
   const [isPendingUpgrade, setIsPendingUpgrade] = useState<boolean>(false);
   const [totalGenerations, setTotalGenerations] = useState<number>(0);
@@ -122,6 +124,13 @@ const App: React.FC = () => {
     // Escuchar cambios en la autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('AUTH STATE CHANGE:', _event, session?.user?.email);
+      
+      // Detectar cuando el usuario llega desde el link de recuperación de contraseña
+      if (_event === 'PASSWORD_RECOVERY') {
+        console.log('PASSWORD RECOVERY EVENT DETECTED');
+        setIsResetPasswordModalOpen(true);
+        return;
+      }
       
       if (session?.user) {
         setUserId(session.user.id);
@@ -613,6 +622,15 @@ const App: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      <ResetPasswordModal
+        isOpen={isResetPasswordModalOpen}
+        onClose={() => setIsResetPasswordModalOpen(false)}
+        onSuccess={() => {
+          setIsResetPasswordModalOpen(false);
+          alert('¡Contraseña actualizada! Ya puedes iniciar sesión.');
+        }}
       />
 
       <footer className="mt-20 py-12 text-center text-gray-400 text-sm border-t border-gray-100">
