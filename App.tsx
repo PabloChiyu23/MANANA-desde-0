@@ -168,11 +168,25 @@ const App: React.FC = () => {
           console.log('USER DATA FROM SUPABASE:', userData, 'ERROR:', userError);
         
           if (userData) {
-            setIsPro(userData.is_pro);
-            setTotalGenerations(userData.total_generations);
-            // Sincronizar localStorage con Supabase
-            localStorage.setItem('manana_total_generations', userData.total_generations.toString());
-            console.log('SET TOTAL GENERATIONS TO:', userData.total_generations);
+            const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
+            const supabaseGens = userData.total_generations;
+            
+            // Si localStorage tiene más generaciones, actualizar Supabase
+            if (localGens > supabaseGens) {
+              console.log('LOCAL HAS MORE GENERATIONS, SYNCING TO SUPABASE:', localGens);
+              await supabase
+                .from('users')
+                .update({ total_generations: localGens })
+                .eq('id', session.user.id);
+              setTotalGenerations(localGens);
+              setIsPro(userData.is_pro);
+            } else {
+              // Supabase es la fuente de verdad
+              setIsPro(userData.is_pro);
+              setTotalGenerations(supabaseGens);
+              localStorage.setItem('manana_total_generations', supabaseGens.toString());
+              console.log('SET TOTAL GENERATIONS TO:', supabaseGens);
+            }
           } else if (userError?.code === 'PGRST116') {
             // Usuario no existe en la tabla, crearlo con las generaciones de localStorage
             console.log('USER NOT FOUND, CREATING...');
