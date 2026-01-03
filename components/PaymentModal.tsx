@@ -99,23 +99,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
             setStep('loading');
             
             try {
-              const response = await fetch('/api/process-payment', {
+              const response = await fetch('/api/create-subscription', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  ...formData,
                   userId,
                   userEmail,
-                  amount: 29,
-                  description: 'MAÑANA PRO - Suscripción Mensual'
+                  cardToken: formData.token,
+                  paymentMethodId: formData.payment_method_id
                 }),
               });
 
               const result = await response.json();
               
-              if (result.status === 'approved') {
+              if (result.status === 'authorized') {
                 setStep('success');
                 setTimeout(() => {
                   onSuccess();
@@ -124,12 +123,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
               } else if (result.status === 'pending' || result.status === 'in_process') {
                 setStep('pending');
               } else {
-                setErrorMessage(result.message || 'El pago fue rechazado');
+                setErrorMessage(result.message || 'No se pudo crear la suscripción');
                 setStep('error');
               }
             } catch (error: any) {
-              console.error('Payment error:', error);
-              setErrorMessage(error.message || 'Error al procesar el pago');
+              console.error('Subscription error:', error);
+              setErrorMessage(error.message || 'Error al crear la suscripción');
               setStep('error');
             }
           },
@@ -265,8 +264,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
               <div className="w-20 h-20 mx-auto mb-8 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-4xl">✅</span>
               </div>
-              <h3 className="text-2xl font-black text-gray-800 mb-2">¡PAGO EXITOSO!</h3>
-              <p className="text-gray-500 font-medium px-4 mb-6">Tu cuenta PRO ya está activa. ¡Disfruta de todas las funciones!</p>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">¡SUSCRIPCIÓN ACTIVA!</h3>
+              <p className="text-gray-500 font-medium px-4 mb-6">Tu cuenta PRO ya está activa. Se renovará automáticamente cada mes.</p>
             </div>
           )}
 

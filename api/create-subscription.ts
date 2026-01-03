@@ -28,10 +28,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { userId, userEmail, cardToken, paymentMethodId, issuerId } = req.body;
+    const { userId, userEmail, cardToken, paymentMethodId } = req.body;
 
     if (!userId || !userEmail) {
       return res.status(400).json({ error: 'User ID and email are required' });
+    }
+
+    if (!cardToken) {
+      return res.status(400).json({ error: 'Card token is required' });
     }
 
     if (!mercadopagoAccessToken) {
@@ -46,18 +50,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       reason: 'MAÑANA PRO - Suscripción Mensual',
       external_reference: userId,
       payer_email: userEmail,
+      card_token_id: cardToken,
+      status: 'authorized',
       auto_recurring: {
         frequency: 1,
         frequency_type: 'months',
         transaction_amount: price,
         currency_id: 'MXN'
-      },
-      back_url: `${req.headers.origin || 'https://manana-desde-0.vercel.app'}?subscription=success`
+      }
     };
 
-    if (cardToken) {
-      subscriptionData.card_token_id = cardToken;
-      if (paymentMethodId) subscriptionData.payment_method_id = paymentMethodId;
+    if (paymentMethodId) {
+      subscriptionData.payment_method_id = paymentMethodId;
     }
 
     console.log('Creating subscription for user:', userId, 'Price:', price);
@@ -73,16 +77,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = await response.json();
     
-    console.log('Subscription result:', result);
+    console.log('Subscription result:', JSON.stringify(result, null, 2));
 
-    if (result.id) {
+    if (result.id && result.status === 'authorized') {
       if (supabaseUrl && supabaseServiceKey) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         
         const { error: updateError } = await supabase
           .from('users')
           .update({ 
-            is_pro: result.status === 'authorized',
+            is_pro: true,
             subscription_id: result.id,
             subscription_status: result.status,
             subscription_price: price
@@ -96,43 +100,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      if (result.init_point) {
-        return res.status(200).json({
-          status: 'redirect',
-          init_point: result.init_point,
-          subscription_id: result.id,
-          price: price,
-          isPromo: isPromo,
-          message: isPromo 
-            ? `¡Precio promocional de $${price} MXN/mes bloqueado!` 
-            : `Suscripción de $${price} MXN/mes`
-        });
-      }
+      return res.status(200).json({
+        status: 'authorized',
+        subscription_id: result.id,
+        price: price,
+        isPromo: isPromo,
+        next_payment_date: result.next_payment_date,
+        message: '¡Suscripción activa! Tu cuenta PRO está lista.'
+      });
 
-      if (result.status === 'authorized') {
-        return res.status(200).json({
-          status: 'authorized',
-          subscription_id: result.id,
-          price: price,
-          isPromo: isPromo,
-          message: '¡Suscripción activa! Tu cuenta PRO está lista.'
-        });
-      }
-
+    } else if (result.id) {
       return res.status(200).json({
         status: result.status || 'pending',
         subscription_id: result.id,
-        init_point: result.init_point,
         price: price,
         isPromo: isPromo,
-        message: 'Suscripción creada. Completa el pago para activar PRO.'
+        message: 'Suscripción creada. El primer pago está siendo procesado.'
       });
 
     } else {
       console.error('Subscription creation failed:', result);
+      
+      const errorMessage = result.message || result.cause?.[0]?.description || 'No se pudo crear la suscripción';
+      
       return res.status(400).json({
         status: 'error',
-        message: result.message || 'No se pudo crear la suscripción',
+        message: errorMessage,
         details: result
       });
     }
