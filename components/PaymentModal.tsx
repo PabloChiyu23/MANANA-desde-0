@@ -9,9 +9,10 @@ interface PaymentModalProps {
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, onClose, onSuccess }) => {
-  const [step, setStep] = useState<'info' | 'loading' | 'success' | 'pending' | 'error'>('info');
+  const [step, setStep] = useState<'info' | 'loading' | 'success' | 'pending' | 'error' | 'redirect'>('info');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [priceInfo, setPriceInfo] = useState<{price: number, isPromo: boolean, regularPrice: number} | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
@@ -48,7 +49,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
       const result = await response.json();
       
       if (result.init_point) {
-        window.location.href = result.init_point;
+        setRedirectUrl(result.init_point);
+        setStep('redirect');
       } else if (result.status === 'authorized') {
         setStep('success');
         setTimeout(() => {
@@ -69,6 +71,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
   const handleClose = () => {
     setStep('info');
     setErrorMessage('');
+    setRedirectUrl('');
     onClose();
   };
 
@@ -164,8 +167,37 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
                 <div className="absolute inset-0 border-4 border-[#009EE3] border-t-transparent rounded-full animate-spin"></div>
               </div>
               <h3 className="text-2xl font-black text-gray-800 mb-2">PROCESANDO...</h3>
-              <p className="text-gray-500 font-medium px-4">Estamos procesando tu pago de forma segura.</p>
+              <p className="text-gray-500 font-medium px-4">Estamos preparando tu suscripción.</p>
               <p className="text-[10px] text-gray-400 mt-8 uppercase font-bold tracking-tighter italic">No cierres esta ventana</p>
+            </div>
+          )}
+
+          {step === 'redirect' && (
+            <div className="py-12 text-center">
+              <div className="w-20 h-20 mx-auto mb-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-4xl">🔐</span>
+              </div>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">CONTINUAR A MERCADO PAGO</h3>
+              <p className="text-gray-500 font-medium px-4 mb-6">
+                Tu suscripción está lista. Haz clic en el botón para completar el pago de forma segura.
+              </p>
+              <a
+                href={redirectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full py-5 bg-[#009EE3] hover:bg-[#0089c7] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 transition-all text-center"
+              >
+                IR A MERCADO PAGO
+              </a>
+              <p className="text-xs text-gray-400 mt-4">
+                Se abrirá en una nueva ventana. Regresa aquí cuando termines.
+              </p>
+              <button
+                onClick={handleClose}
+                className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Cancelar
+              </button>
             </div>
           )}
 
