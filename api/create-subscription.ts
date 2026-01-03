@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { userId, userEmail, cardToken, paymentMethodId, issuerId } = req.body;
+    const { userId, userEmail } = req.body;
 
     if (!userId || !userEmail) {
       return res.status(400).json({ error: 'User ID and email are required' });
@@ -41,106 +41,75 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const price = getCurrentPrice();
     const isPromo = price === PROMO_PRICE;
+    const origin = req.headers.origin || 'https://manana-desde-0.vercel.app';
 
-    const subscriptionData: any = {
-      reason: 'MAÑANA PRO - Suscripción Mensual',
-      external_reference: userId,
-      payer_email: userEmail,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: price,
-        currency_id: 'MXN'
+    const preferenceData = {
+      items: [
+        {
+          id: 'manana-pro-monthly',
+          title: 'MAÑANA PRO - Suscripción Mensual',
+          description: isPromo 
+            ? `Precio promocional $${price} MXN/mes (precio normal: $${REGULAR_PRICE})` 
+            : `Suscripción mensual $${price} MXN/mes`,
+          quantity: 1,
+          currency_id: 'MXN',
+          unit_price: price
+        }
+      ],
+      payer: {
+        email: userEmail
       },
-      back_url: `${req.headers.origin || 'https://manana-desde-0.vercel.app'}?subscription=success`
+      back_urls: {
+        success: `${origin}?payment=success&user_id=${userId}&price=${price}`,
+        failure: `${origin}?payment=failure`,
+        pending: `${origin}?payment=pending&user_id=${userId}&price=${price}`
+      },
+      auto_return: 'approved',
+      external_reference: userId,
+      notification_url: `${origin}/api/mercadopago-webhook`,
+      statement_descriptor: 'MANANA PRO',
+      expires: false
     };
 
-    if (cardToken) {
-      subscriptionData.card_token_id = cardToken;
-      if (paymentMethodId) subscriptionData.payment_method_id = paymentMethodId;
-    }
+    console.log('Creating Checkout Pro preference for user:', userId, 'Price:', price);
 
-    console.log('Creating subscription for user:', userId, 'Price:', price);
-
-    const response = await fetch('https://api.mercadopago.com/preapproval', {
+    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${mercadopagoAccessToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(subscriptionData),
+      body: JSON.stringify(preferenceData),
     });
 
     const result = await response.json();
     
-    console.log('Subscription result:', result);
+    console.log('Checkout Pro result:', result);
 
-    if (result.id) {
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ 
-            is_pro: result.status === 'authorized',
-            subscription_id: result.id,
-            subscription_status: result.status,
-            subscription_price: price
-          })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Error updating user subscription:', updateError);
-        } else {
-          console.log('User subscription created:', userId, result.id);
-        }
-      }
-
-      if (result.init_point) {
-        return res.status(200).json({
-          status: 'redirect',
-          init_point: result.init_point,
-          subscription_id: result.id,
-          price: price,
-          isPromo: isPromo,
-          message: isPromo 
-            ? `¡Precio promocional de $${price} MXN/mes bloqueado!` 
-            : `Suscripción de $${price} MXN/mes`
-        });
-      }
-
-      if (result.status === 'authorized') {
-        return res.status(200).json({
-          status: 'authorized',
-          subscription_id: result.id,
-          price: price,
-          isPromo: isPromo,
-          message: '¡Suscripción activa! Tu cuenta PRO está lista.'
-        });
-      }
-
+    if (result.id && result.init_point) {
       return res.status(200).json({
-        status: result.status || 'pending',
-        subscription_id: result.id,
+        status: 'redirect',
         init_point: result.init_point,
+        preference_id: result.id,
         price: price,
         isPromo: isPromo,
-        message: 'Suscripción creada. Completa el pago para activar PRO.'
+        message: isPromo 
+          ? `¡Precio promocional de $${price} MXN/mes!` 
+          : `Suscripción de $${price} MXN/mes`
       });
-
     } else {
-      console.error('Subscription creation failed:', result);
+      console.error('Preference creation failed:', result);
       return res.status(400).json({
         status: 'error',
-        message: result.message || 'No se pudo crear la suscripción',
+        message: result.message || 'No se pudo crear la preferencia de pago',
         details: result
       });
     }
 
   } catch (error: any) {
-    console.error('Create subscription error:', error);
+    console.error('Create preference error:', error);
     return res.status(500).json({ 
-      error: 'Error al crear la suscripción',
+      error: 'Error al crear la preferencia de pago',
       message: error.message 
     });
   }

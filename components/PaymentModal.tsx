@@ -177,20 +177,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
               <div className="w-20 h-20 mx-auto mb-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-4xl">🔐</span>
               </div>
-              <h3 className="text-2xl font-black text-gray-800 mb-2">CONTINUAR A MERCADO PAGO</h3>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">COMPLETAR PAGO</h3>
               <p className="text-gray-500 font-medium px-4 mb-6">
-                Tu suscripción está lista. Haz clic en el botón para completar el pago de forma segura.
+                Haz clic en el botón para ir a Mercado Pago y completar tu pago de forma segura.
               </p>
               <a
                 href={redirectUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="inline-block w-full py-5 bg-[#009EE3] hover:bg-[#0089c7] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 transition-all text-center"
               >
                 IR A MERCADO PAGO
               </a>
               <p className="text-xs text-gray-400 mt-4">
-                Se abrirá en una nueva ventana. Regresa aquí cuando termines.
+                Serás redirigido a Mercado Pago.
               </p>
               <button
                 onClick={handleClose}
