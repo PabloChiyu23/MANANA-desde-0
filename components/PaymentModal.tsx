@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
   const [step, setStep] = useState<'info' | 'loading' | 'error'>('info');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [priceInfo, setPriceInfo] = useState<{price: number, isPromo: boolean, regularPrice: number} | null>(null);
+  const [isReturningUser, setIsReturningUser] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -19,8 +21,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
         .then(res => res.json())
         .then(data => setPriceInfo(data))
         .catch(() => setPriceInfo({ price: 29, isPromo: true, regularPrice: 49 }));
+      
+      if (userId) {
+        supabase
+          .from('users')
+          .select('cancellation_date, subscription_status')
+          .eq('id', userId)
+          .single()
+          .then(({ data }) => {
+            if (data?.cancellation_date || data?.subscription_status === 'cancelled') {
+              setIsReturningUser(true);
+            } else {
+              setIsReturningUser(false);
+            }
+          });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, userId]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -94,12 +111,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
           {step === 'info' && (
             <>
               <div className="text-center mb-8">
-                {priceInfo?.isPromo && (
+                {isReturningUser && (
+                  <div className="flex justify-center mb-3">
+                    <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-2">
+                      <span>👋</span> ¡Bienvenido de vuelta!
+                    </span>
+                  </div>
+                )}
+                {priceInfo?.isPromo && !isReturningUser && (
                   <div className="flex justify-center mb-2">
                     <span className="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full animate-pulse uppercase tracking-widest">
                       Oferta Navidad
                     </span>
                   </div>
+                )}
+                {isReturningUser && (
+                  <p className="text-purple-600 font-bold text-sm mb-2">Te extrañamos en MAÑANA</p>
                 )}
                 <h2 className="text-4xl font-black text-gray-900 mb-2">
                   {priceInfo?.isPromo && <span className="line-through text-gray-400 text-2xl">${priceInfo.regularPrice}</span>}
