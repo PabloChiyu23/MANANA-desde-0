@@ -73,8 +73,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
       
       if (result.init_point) {
         window.location.href = result.init_point;
+      } else if (result.error) {
+        setErrorMessage(result.error);
+        setStep('error');
       } else {
-        setErrorMessage(result.message || 'Error al crear la suscripción');
+        setErrorMessage('No se pudo conectar con Mercado Pago. Intenta de nuevo.');
         setStep('error');
       }
     } catch (error: any) {
