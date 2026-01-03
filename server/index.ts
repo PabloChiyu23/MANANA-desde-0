@@ -299,6 +299,96 @@ apiRouter.get('/subscription-price', (req, res) => {
   });
 });
 
+apiRouter.post('/cancel-subscription', async (req, res) => {
+  console.log('API: Received cancel-subscription request');
+  try {
+    const { userId, reason, feedback } = req.body;
+    const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase credentials not configured');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('subscription_id, email')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      console.error('User not found:', userError);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const subscriptionId = user.subscription_id;
+
+    if (subscriptionId && mercadopagoAccessToken) {
+      console.log('Canceling subscription in Mercado Pago:', subscriptionId);
+      
+      const mpResponse = await fetch(
+        `https://api.mercadopago.com/preapproval/${subscriptionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${mercadopagoAccessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: 'cancelled' })
+        }
+      );
+
+      const mpResult = await mpResponse.json();
+      console.log('Mercado Pago cancellation result:', JSON.stringify(mpResult, null, 2));
+
+      if (!mpResponse.ok) {
+        console.error('Failed to cancel in Mercado Pago:', mpResult);
+      }
+    } else {
+      console.log('No subscription_id found or no MP token, skipping Mercado Pago cancellation');
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        is_pro: false,
+        subscription_status: 'cancelled',
+        cancellation_reason: reason || null,
+        cancellation_feedback: feedback || null,
+        cancellation_date: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+
+    if (updateError) {
+      console.error('Failed to update user:', updateError);
+      return res.status(500).json({ error: 'Failed to update user status' });
+    }
+
+    console.log('Subscription cancelled successfully for user:', userId);
+    return res.json({ 
+      success: true, 
+      message: 'Suscripción cancelada exitosamente' 
+    });
+
+  } catch (error: any) {
+    console.error('Cancel subscription error:', error);
+    res.status(500).json({ 
+      error: 'Error al cancelar la suscripción',
+      message: error.message 
+    });
+  }
+});
+
 apiRouter.post('/create-preference', async (req, res) => {
   console.log('API: Received create-preference request');
   try {

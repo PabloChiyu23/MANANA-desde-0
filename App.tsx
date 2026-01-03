@@ -473,27 +473,43 @@ const App: React.FC = () => {
   const handleCancelClick = () => setIsCancelModalOpen(true);
 
   const handleFinalCancel = async (reason: string, feedback: string) => {
-    setIsPro(false);
-    localStorage.setItem('manana_pro_status', 'false');
-    
-    // Guardar cancelación en Supabase
     const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const { error } = await supabase
-        .from('users')
-        .update({ is_pro: false, updated_at: new Date().toISOString() })
-        .eq('id', session.user.id);
-      
-      if (error) {
-        console.error('ERROR CANCELING PRO STATUS:', error);
-      } else {
-        console.log('PRO STATUS CANCELED IN SUPABASE');
-      }
-    }
     
-    setIsCancelModalOpen(false);
-    alert("Suscripción cancelada.");
-    setView('generator');
+    if (session?.user) {
+      try {
+        const response = await fetch('/api/cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: session.user.id,
+            reason,
+            feedback
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          setIsPro(false);
+          localStorage.setItem('manana_pro_status', 'false');
+          setIsCancelModalOpen(false);
+          alert("Suscripción cancelada exitosamente. Mercado Pago dejará de cobrar automáticamente.");
+          setView('generator');
+        } else {
+          console.error('ERROR CANCELING:', result);
+          alert("Error al cancelar: " + (result.error || 'Intenta de nuevo'));
+        }
+      } catch (error) {
+        console.error('CANCEL ERROR:', error);
+        alert("Error de conexión. Intenta de nuevo.");
+      }
+    } else {
+      setIsPro(false);
+      localStorage.setItem('manana_pro_status', 'false');
+      setIsCancelModalOpen(false);
+      alert("Suscripción cancelada.");
+      setView('generator');
+    }
   };
 
   const handleSelectLesson = (l: SavedLesson) => {
