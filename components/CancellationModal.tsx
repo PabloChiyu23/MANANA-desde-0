@@ -88,7 +88,7 @@ const CancellationModal: React.FC<CancellationModalProps> = ({ isOpen, onClose, 
                 disabled={!selectedReason}
                 className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-lg shadow-red-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 text-sm"
               >
-                CANCELAR
+                CONFIRMAR CANCELACIÓN
               </button>
             </div>
           </form>

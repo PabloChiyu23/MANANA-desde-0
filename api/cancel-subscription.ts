@@ -83,9 +83,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .update({
         is_pro: false,
         subscription_status: 'cancelled',
-        cancellation_reason: reason || null,
-        cancellation_feedback: feedback || null,
-        cancellation_date: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);
