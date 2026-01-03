@@ -15,7 +15,7 @@ interface PaymentModalProps {
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, onClose, onSuccess }) => {
-  const [step, setStep] = useState<'info' | 'payment' | 'loading' | 'success' | 'error'>('info');
+  const [step, setStep] = useState<'info' | 'payment' | 'loading' | 'success' | 'pending' | 'error'>('info');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const brickContainerRef = useRef<HTMLDivElement>(null);
   const brickControllerRef = useRef<any>(null);
@@ -104,8 +104,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
                   onClose();
                 }, 2000);
               } else if (result.status === 'in_process' || result.status === 'pending') {
-                setErrorMessage('Tu pago está siendo procesado. Te notificaremos cuando se complete.');
-                setStep('error');
+                setStep('pending');
               } else {
                 setErrorMessage(result.message || 'El pago no pudo ser procesado');
                 setStep('error');
@@ -259,6 +258,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
               </div>
               <h3 className="text-2xl font-black text-gray-800 mb-2">¡PAGO EXITOSO!</h3>
               <p className="text-gray-500 font-medium px-4 mb-6">Tu cuenta PRO ya está activa. ¡Disfruta de todas las funciones!</p>
+            </div>
+          )}
+
+          {step === 'pending' && (
+            <div className="py-12 text-center">
+              <div className="w-20 h-20 mx-auto mb-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-4xl">⏳</span>
+              </div>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">PAGO EN PROCESO</h3>
+              <p className="text-gray-500 font-medium px-4 mb-4">Tu banco está verificando la transacción. Esto puede tardar unos minutos.</p>
+              <p className="text-sm text-gray-400 px-4 mb-6">Tu cuenta PRO se activará automáticamente cuando el pago sea confirmado.</p>
+              <button
+                onClick={handleClose}
+                className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-xl transition-all"
+              >
+                Entendido
+              </button>
             </div>
           )}
 
