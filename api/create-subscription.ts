@@ -46,12 +46,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const price = getCurrentPrice();
     const isPromo = price === PROMO_PRICE;
 
+    const origin = req.headers.origin || 'https://manana-desde-0.vercel.app';
+    
     const subscriptionData: any = {
       reason: 'MAÑANA PRO - Suscripción Mensual',
       external_reference: userId,
       payer_email: userEmail,
       card_token_id: cardToken,
       status: 'authorized',
+      back_url: origin,
       auto_recurring: {
         frequency: 1,
         frequency_type: 'months',
