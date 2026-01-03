@@ -182,6 +182,123 @@ apiRouter.post('/generate-planb', async (req, res) => {
   }
 });
 
+const PROMO_END_DATE = new Date('2026-01-07T00:00:00-06:00');
+const PROMO_PRICE = 29;
+const REGULAR_PRICE = 49;
+
+function getCurrentPrice(): number {
+  const now = new Date();
+  return now < PROMO_END_DATE ? PROMO_PRICE : REGULAR_PRICE;
+}
+
+apiRouter.post('/create-subscription', async (req, res) => {
+  console.log('API: Received create-subscription request');
+  try {
+    const { userId, userEmail } = req.body;
+    const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+    if (!userId || !userEmail) {
+      return res.status(400).json({ error: 'User ID and email are required' });
+    }
+
+    if (!mercadopagoAccessToken) {
+      console.error('MERCADOPAGO_ACCESS_TOKEN not configured');
+      return res.status(500).json({ error: 'Payment system not configured' });
+    }
+
+    const price = getCurrentPrice();
+    const isPromo = price === PROMO_PRICE;
+
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : 'http://localhost:5000';
+
+    const subscriptionData = {
+      reason: 'MAÑANA PRO - Suscripción Mensual',
+      external_reference: userId,
+      payer_email: userEmail,
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: 'months',
+        transaction_amount: price,
+        currency_id: 'MXN'
+      },
+      back_url: `${baseUrl}/?subscription=success`
+    };
+
+    console.log('Creating subscription for user:', userId, 'Price:', price);
+
+    const response = await fetch('https://api.mercadopago.com/preapproval', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${mercadopagoAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(subscriptionData),
+    });
+
+    const result = await response.json();
+    console.log('Subscription result:', JSON.stringify(result, null, 2));
+
+    if (result.id) {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+      
+      if (supabaseUrl && supabaseServiceKey) {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        
+        await supabase
+          .from('users')
+          .update({ 
+            subscription_id: result.id,
+            subscription_status: result.status,
+            subscription_price: price
+          })
+          .eq('id', userId);
+      }
+
+      return res.json({
+        status: result.status || 'pending',
+        subscription_id: result.id,
+        init_point: result.init_point,
+        price: price,
+        isPromo: isPromo,
+        message: isPromo 
+          ? `¡Precio promocional de $${price} MXN/mes!` 
+          : `Suscripción de $${price} MXN/mes`
+      });
+    } else {
+      console.error('Subscription creation failed:', result);
+      return res.status(400).json({
+        status: 'error',
+        message: result.message || 'No se pudo crear la suscripción',
+        details: result
+      });
+    }
+
+  } catch (error: any) {
+    console.error('Create subscription error:', error);
+    res.status(500).json({ 
+      error: 'Error al crear la suscripción',
+      message: error.message 
+    });
+  }
+});
+
+apiRouter.get('/subscription-price', (req, res) => {
+  const price = getCurrentPrice();
+  const isPromo = price === PROMO_PRICE;
+  const promoEndsAt = PROMO_END_DATE.toISOString();
+  
+  res.json({
+    price,
+    isPromo,
+    promoEndsAt,
+    regularPrice: REGULAR_PRICE
+  });
+});
+
 apiRouter.post('/create-preference', async (req, res) => {
   console.log('API: Received create-preference request');
   try {

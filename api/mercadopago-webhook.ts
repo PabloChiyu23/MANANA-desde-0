@@ -62,8 +62,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { type, data } = req.body;
 
+    if (type === 'subscription_preapproval') {
+      const subscriptionId = data?.id;
+      if (!subscriptionId) {
+        return res.status(400).json({ error: 'Missing subscription ID' });
+      }
+
+      const subResponse = await fetch(
+        `https://api.mercadopago.com/preapproval/${subscriptionId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${mercadopagoAccessToken}`,
+          },
+        }
+      );
+
+      if (!subResponse.ok) {
+        console.error('Failed to fetch subscription details:', subResponse.status);
+        return res.status(500).json({ error: 'Failed to verify subscription' });
+      }
+
+      const subscription = await subResponse.json();
+      console.log('SUBSCRIPTION DETAILS:', JSON.stringify(subscription, null, 2));
+
+      const userId = subscription.external_reference;
+      if (!userId) {
+        console.error('No external_reference in subscription');
+        return res.status(400).json({ error: 'Missing user reference' });
+      }
+
+      const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+      
+      const isPro = subscription.status === 'authorized';
+      
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          is_pro: isPro,
+          subscription_id: subscription.id,
+          subscription_status: subscription.status,
+          subscription_price: subscription.auto_recurring?.transaction_amount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Failed to update subscription status:', updateError);
+        return res.status(500).json({ error: 'Failed to update user' });
+      }
+
+      console.log('SUCCESS: User', userId, 'subscription status:', subscription.status);
+      return res.status(200).json({ success: true, userId, status: subscription.status });
+    }
+
     if (type !== 'payment') {
-      console.log('Ignoring non-payment notification:', type);
+      console.log('Ignoring notification type:', type);
       return res.status(200).json({ received: true });
     }
 

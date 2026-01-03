@@ -53,13 +53,12 @@ const App: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     
-    if (paymentStatus === 'success') {
-      console.log('PAYMENT SUCCESS DETECTED FROM URL');
-      // Limpiar URL
+    const subscriptionStatus = urlParams.get('subscription');
+    
+    if (paymentStatus === 'success' || subscriptionStatus === 'success') {
+      console.log('PAYMENT/SUBSCRIPTION SUCCESS DETECTED FROM URL');
       window.history.replaceState({}, '', window.location.pathname);
-      // El webhook ya actualizó Supabase, solo mostrar mensaje
-      alert('¡Pago exitoso! Tu cuenta PRO se activará en unos segundos.');
-      // Recargar datos del usuario
+      alert('¡Suscripción activada! Tu cuenta PRO ya está lista.');
       setTimeout(() => window.location.reload(), 1500);
     } else if (paymentStatus === 'failure') {
       console.log('PAYMENT FAILURE DETECTED FROM URL');

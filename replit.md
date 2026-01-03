@@ -80,19 +80,31 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 - With account: 10 classes
 - PRO: Unlimited
 
-## Payment Flow (Checkout Bricks)
+## Payment Flow (Checkout Bricks + Subscriptions)
 1. User clicks "Upgrade to PRO"
-2. PaymentModal opens with Mercado Pago Bricks form (in-app, no redirect)
+2. PaymentModal opens with Mercado Pago Bricks form (in-app)
 3. User enters card details directly in the app
 4. Frontend calls `/api/process-payment` with tokenized card data
-5. Backend processes payment via Mercado Pago API
+5. Backend processes first payment via Mercado Pago API
 6. If approved, backend updates `users.is_pro = true` in Supabase
 7. User sees success message immediately
+
+### Subscription Pricing
+- **Until January 6, 2026**: $29 MXN/month (promotional price)
+- **After January 6, 2026**: $49 MXN/month (regular price)
+- Users who subscribe during promo keep the $29 rate as long as subscription is active
 
 ### Payment Statuses
 - `approved`: Payment successful, PRO activated instantly
 - `pending`/`in_process`: Bank verification needed, PRO activates when confirmed
 - `rejected`: Payment failed, user sees specific error message
+- `authorized`: Subscription active, automatic monthly billing
+
+### API Endpoints for Payments
+- `POST /api/process-payment`: Process single payment with Checkout Bricks
+- `POST /api/create-subscription`: Create Mercado Pago subscription
+- `GET /api/subscription-price`: Get current price (promo or regular)
+- `POST /api/mercadopago-webhook`: Handle payment/subscription notifications
 
 ### Required Environment Variables for Payments
 - `MERCADOPAGO_ACCESS_TOKEN`: Backend (production: APP_USR-xxx)
