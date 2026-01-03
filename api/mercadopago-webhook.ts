@@ -164,9 +164,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing user reference' });
     }
 
-    const userId = externalReference;
+    const [userId, planId] = externalReference.includes('|') 
+      ? externalReference.split('|') 
+      : [externalReference, 'unknown'];
 
-    console.log('PAYMENT INFO:', { userId, amount: payment.transaction_amount });
+    console.log('PAYMENT INFO:', { userId, planId, amount: payment.transaction_amount });
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -174,7 +176,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('users')
       .update({
         is_pro: true,
-        subscription_price: payment.transaction_amount,
+        subscription_plan: planId,
+        subscription_amount: payment.transaction_amount,
+        subscription_date: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);

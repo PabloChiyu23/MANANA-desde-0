@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+declare global {
+  interface Window {
+    MercadoPago: any;
+  }
+}
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -9,69 +15,149 @@ interface PaymentModalProps {
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, onClose, onSuccess }) => {
-  const [step, setStep] = useState<'info' | 'loading' | 'success' | 'pending' | 'error' | 'redirect'>('info');
+  const [step, setStep] = useState<'info' | 'payment' | 'loading' | 'success' | 'pending' | 'error'>('info');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [priceInfo, setPriceInfo] = useState<{price: number, isPromo: boolean, regularPrice: number} | null>(null);
-  const [redirectUrl, setRedirectUrl] = useState<string>('');
+  const brickContainerRef = useRef<HTMLDivElement>(null);
+  const brickControllerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      fetch('/api/subscription-price')
-        .then(res => res.json())
-        .then(data => setPriceInfo(data))
-        .catch(() => setPriceInfo({ price: 29, isPromo: true, regularPrice: 49 }));
+    if (!isOpen) {
+      setStep('info');
+      setErrorMessage('');
+      if (brickControllerRef.current) {
+        brickControllerRef.current.unmount?.();
+        brickControllerRef.current = null;
+      }
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const handleSubscription = async () => {
-    if (!userId || !userEmail) {
-      setErrorMessage('Debes iniciar sesión para continuar');
-      setStep('error');
-      return;
+  useEffect(() => {
+    if (step === 'payment' && isOpen) {
+      initializeBrick();
     }
-    
-    setStep('loading');
-    
-    try {
-      const response = await fetch('/api/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          userEmail
-        }),
-      });
+  }, [step, isOpen]);
 
-      const result = await response.json();
-      
-      if (result.init_point) {
-        setRedirectUrl(result.init_point);
-        setStep('redirect');
-      } else if (result.status === 'authorized') {
-        setStep('success');
-        setTimeout(() => {
-          onSuccess();
-          onClose();
-        }, 2000);
-      } else {
-        setErrorMessage(result.message || 'Error al crear la suscripción');
+  const initializeBrick = async () => {
+    if (!window.MercadoPago) {
+      const script = document.createElement('script');
+      script.src = 'https://sdk.mercadopago.com/js/v2';
+      script.async = true;
+      script.onload = () => setupBrick();
+      document.body.appendChild(script);
+    } else {
+      setupBrick();
+    }
+  };
+
+  const setupBrick = async () => {
+    try {
+      const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+      if (!publicKey) {
+        console.error('VITE_MERCADOPAGO_PUBLIC_KEY not configured');
+        setErrorMessage('Error de configuración del sistema de pagos');
         setStep('error');
+        return;
       }
+
+      const mp = new window.MercadoPago(publicKey, { locale: 'es-MX' });
+      const bricksBuilder = mp.bricks();
+
+      if (brickControllerRef.current) {
+        brickControllerRef.current.unmount?.();
+      }
+
+      const settings = {
+        initialization: {
+          amount: 29,
+          payer: {
+            email: userEmail || ''
+          }
+        },
+        customization: {
+          visual: {
+            style: {
+              theme: 'default',
+              customVariables: {
+                formBackgroundColor: '#ffffff',
+                baseColor: '#009EE3'
+              }
+            },
+            hideFormTitle: true,
+            hidePaymentButton: false
+          },
+          paymentMethods: {
+            minInstallments: 1,
+            maxInstallments: 1
+          }
+        },
+        callbacks: {
+          onReady: () => {
+            console.log('Brick ready');
+          },
+          onSubmit: async (formData: any) => {
+            console.log('Form submitted:', formData);
+            setStep('loading');
+            
+            try {
+              const response = await fetch('/api/process-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  ...formData,
+                  userId,
+                  userEmail,
+                  amount: 29,
+                  description: 'MAÑANA PRO - Suscripción Mensual'
+                }),
+              });
+
+              const result = await response.json();
+              
+              if (result.status === 'approved') {
+                setStep('success');
+                setTimeout(() => {
+                  onSuccess();
+                  onClose();
+                }, 2000);
+              } else if (result.status === 'pending' || result.status === 'in_process') {
+                setStep('pending');
+              } else {
+                setErrorMessage(result.message || 'El pago fue rechazado');
+                setStep('error');
+              }
+            } catch (error: any) {
+              console.error('Payment error:', error);
+              setErrorMessage(error.message || 'Error al procesar el pago');
+              setStep('error');
+            }
+          },
+          onError: (error: any) => {
+            console.error('Brick error:', error);
+            setErrorMessage('Error en el formulario de pago');
+            setStep('error');
+          }
+        }
+      };
+
+      brickControllerRef.current = await bricksBuilder.create('cardPayment', 'payment-brick-container', settings);
     } catch (error: any) {
-      console.error('Subscription error:', error);
-      setErrorMessage(error.message || 'Error al procesar la suscripción');
+      console.error('Error setting up brick:', error);
+      setErrorMessage('Error al cargar el formulario de pago');
       setStep('error');
     }
   };
 
+  if (!isOpen) return null;
+
   const handleClose = () => {
+    if (brickControllerRef.current) {
+      brickControllerRef.current.unmount?.();
+      brickControllerRef.current = null;
+    }
     setStep('info');
     setErrorMessage('');
-    setRedirectUrl('');
     onClose();
   };
 
@@ -96,57 +182,45 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
           {step === 'info' && (
             <>
               <div className="text-center mb-8">
-                {priceInfo?.isPromo && (
-                  <div className="flex justify-center mb-2">
-                     <span className="bg-red-50 text-red-600 text-[10px] font-black px-3 py-1 rounded-full uppercase">Oferta Especial - Termina el 6 de Enero</span>
-                  </div>
-                )}
-                <h3 className="text-2xl font-black text-gray-800 mb-1 tracking-tight">MAÑANA PRO</h3>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-widest">Suscripción Mensual</p>
-                
-                <div className="mt-6 flex items-center justify-center gap-3">
-                  {priceInfo?.isPromo && (
-                    <span className="text-xl text-gray-300 line-through font-bold">${priceInfo.regularPrice}</span>
-                  )}
-                  <div className="px-5 py-3 bg-green-50 text-green-700 rounded-2xl font-black text-3xl border border-green-100 shadow-sm">
-                    ${priceInfo?.price || 29}.00 <span className="text-sm font-bold opacity-70">MXN/mes</span>
-                  </div>
+                <div className="flex justify-center mb-2">
+                  <span className="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full animate-pulse uppercase tracking-widest">
+                    Oferta Navidad
+                  </span>
                 </div>
-                <p className="mt-4 text-[11px] text-gray-500 font-medium">
-                   {priceInfo?.isPromo 
-                     ? '¡Precio promocional garantizado mientras mantengas tu suscripción!'
-                     : 'Cancela cuando quieras. Sin compromisos.'}
-                </p>
+                <h2 className="text-4xl font-black text-gray-900 mb-2">
+                  <span className="line-through text-gray-400 text-2xl">$49</span> $29<span className="text-lg font-medium text-gray-500">/mes</span>
+                </h2>
+                <p className="text-gray-500 font-medium">Precio especial por tiempo limitado</p>
               </div>
-
-              <div className="space-y-3 mb-8 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                  <span className="text-green-500 font-bold">✓</span> Generaciones ilimitadas
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                  <span className="text-green-500 font-bold">✓</span> Exportar a PDF profesional
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                  <span className="text-green-500 font-bold">✓</span> Biblioteca sin límites
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                  <span className="text-green-500 font-bold">✓</span> Copiar contenido
-                </div>
+              
+              <div className="space-y-3 mb-8">
+                {[
+                  'Clases ilimitadas',
+                  'Todos los grados y niveles',
+                  'Descarga en PDF',
+                  'Actividades personalizadas',
+                  'Plan B para imprevistos'
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium text-sm">{feature}</span>
+                  </div>
+                ))}
               </div>
 
               <button
-                onClick={handleSubscription}
+                onClick={() => setStep('payment')}
                 className="w-full py-5 bg-[#009EE3] hover:bg-[#0089c7] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 active:scale-95"
               >
-                <span>SUSCRIBIRSE POR ${priceInfo?.price || 29}/MES</span>
+                <span>PAGAR $29 MXN</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
-              
-              <p className="text-center text-xs text-gray-400 mt-4">
-                Serás redirigido a Mercado Pago para completar el pago.
-              </p>
               
               <div className="mt-6 flex flex-col items-center gap-2">
                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">
@@ -160,6 +234,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
             </>
           )}
 
+          {step === 'payment' && (
+            <>
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-black text-gray-800 mb-1">Pago con Tarjeta</h3>
+                <p className="text-gray-500 text-sm">Total: <span className="font-bold text-green-600">$29.00 MXN</span></p>
+              </div>
+              <div id="payment-brick-container" ref={brickContainerRef} className="min-h-[300px]">
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </div>
+            </>
+          )}
+
           {step === 'loading' && (
             <div className="py-12 text-center">
               <div className="relative w-20 h-20 mx-auto mb-8">
@@ -167,35 +255,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, userId, userEmail, 
                 <div className="absolute inset-0 border-4 border-[#009EE3] border-t-transparent rounded-full animate-spin"></div>
               </div>
               <h3 className="text-2xl font-black text-gray-800 mb-2">PROCESANDO...</h3>
-              <p className="text-gray-500 font-medium px-4">Estamos preparando tu suscripción.</p>
+              <p className="text-gray-500 font-medium px-4">Estamos procesando tu pago de forma segura.</p>
               <p className="text-[10px] text-gray-400 mt-8 uppercase font-bold tracking-tighter italic">No cierres esta ventana</p>
-            </div>
-          )}
-
-          {step === 'redirect' && (
-            <div className="py-12 text-center">
-              <div className="w-20 h-20 mx-auto mb-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-4xl">🔐</span>
-              </div>
-              <h3 className="text-2xl font-black text-gray-800 mb-2">COMPLETAR PAGO</h3>
-              <p className="text-gray-500 font-medium px-4 mb-6">
-                Haz clic en el botón para ir a Mercado Pago y completar tu pago de forma segura.
-              </p>
-              <a
-                href={redirectUrl}
-                className="inline-block w-full py-5 bg-[#009EE3] hover:bg-[#0089c7] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 transition-all text-center"
-              >
-                IR A MERCADO PAGO
-              </a>
-              <p className="text-xs text-gray-400 mt-4">
-                Serás redirigido a Mercado Pago.
-              </p>
-              <button
-                onClick={handleClose}
-                className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
-              >
-                Cancelar
-              </button>
             </div>
           )}
 
