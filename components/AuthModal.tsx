@@ -51,45 +51,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         } else if (data.user) {
           console.log('REGISTERING USER - acceptedMarketing:', acceptedMarketing);
           
-          const insertData = {
-            id: data.user.id,
-            email: data.user.email,
-            is_pro: false,
-            total_generations: 0,
-            accepted_terms: true,
-            accepted_marketing: acceptedMarketing,
-            terms_accepted_at: new Date().toISOString()
-          };
-          
-          console.log('INSERT DATA:', insertData);
-          
-          const { error: insertError } = await supabase
+          // Usar UPSERT para garantizar que se guarde el marketing preference
+          const { error: upsertError } = await supabase
             .from('users')
-            .insert([insertData]);
+            .upsert({
+              id: data.user.id,
+              email: data.user.email,
+              is_pro: false,
+              total_generations: 0,
+              accepted_terms: true,
+              accepted_marketing: acceptedMarketing,
+              terms_accepted_at: new Date().toISOString()
+            }, { 
+              onConflict: 'id',
+              ignoreDuplicates: false 
+            });
 
-          if (insertError) {
-            console.error('Error creating user record:', insertError);
-            
-            // Si falla porque el usuario ya existe, intentar UPDATE
-            if (insertError.message.includes('duplicate')) {
-              console.log('User exists, updating marketing preference...');
-              const { error: updateError } = await supabase
-                .from('users')
-                .update({ 
-                  accepted_marketing: acceptedMarketing,
-                  accepted_terms: true,
-                  terms_accepted_at: new Date().toISOString()
-                })
-                .eq('id', data.user.id);
-              
-              if (updateError) {
-                console.error('Error updating user:', updateError);
-              } else {
-                console.log('Updated marketing preference successfully');
-              }
-            }
+          if (upsertError) {
+            console.error('Error upserting user record:', upsertError);
           } else {
-            console.log('User created successfully with marketing:', acceptedMarketing);
+            console.log('User upserted successfully with marketing:', acceptedMarketing);
           }
 
           if (data.session) {

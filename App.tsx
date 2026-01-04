@@ -226,17 +226,21 @@ const App: React.FC = () => {
             }
           } else if (userError?.code === 'PGRST116') {
             // Usuario no existe en la tabla, crearlo con las generaciones de localStorage
+            // NO sobrescribir accepted_marketing - puede haber sido guardado por AuthModal
             console.log('USER NOT FOUND, CREATING...');
             const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
             const { error: insertError } = await supabase
               .from('users')
-              .insert({
+              .upsert({
                 id: session.user.id,
                 email: session.user.email,
                 is_pro: false,
                 total_generations: localGens
+              }, { 
+                onConflict: 'id',
+                ignoreDuplicates: true  // NO sobrescribir si ya existe
               });
-            console.log('INSERT RESULT:', insertError);
+            console.log('UPSERT RESULT:', insertError);
             if (!insertError) {
               setIsPro(false);
               setTotalGenerations(localGens);
