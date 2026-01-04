@@ -225,26 +225,30 @@ const App: React.FC = () => {
               console.log('SET TOTAL GENERATIONS TO:', supabaseGens);
             }
           } else if (userError?.code === 'PGRST116') {
-            // Usuario no existe en la tabla, crearlo con las generaciones de localStorage
-            // NO sobrescribir accepted_marketing - puede haber sido guardado por AuthModal
-            console.log('USER NOT FOUND, CREATING...');
+            // Usuario no existe en la tabla - esperar a que AuthModal lo cree
+            // O crear vía servidor si es necesario
+            console.log('USER NOT FOUND, will be created by AuthModal or server');
             const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
-            const { error: insertError } = await supabase
-              .from('users')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email,
-                is_pro: false,
-                total_generations: localGens
-              }, { 
-                onConflict: 'id',
-                ignoreDuplicates: true  // NO sobrescribir si ya existe
+            
+            // Intentar crear vía servidor (sin marketing, ya que no tenemos esa info aquí)
+            try {
+              const response = await fetch('/api/register-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: session.user.id,
+                  email: session.user.email,
+                  acceptedMarketing: false // Default, AuthModal lo actualizará si corresponde
+                })
               });
-            console.log('UPSERT RESULT:', insertError);
-            if (!insertError) {
-              setIsPro(false);
-              setTotalGenerations(localGens);
+              const result = await response.json();
+              console.log('Server register result:', result);
+            } catch (err) {
+              console.log('Could not create user via server:', err);
             }
+            
+            setIsPro(false);
+            setTotalGenerations(localGens);
           } else if (userError) {
             // Otro error de Supabase - intentar usar localStorage como fallback temporal
             console.error('SUPABASE ERROR:', userError);
