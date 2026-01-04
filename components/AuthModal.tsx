@@ -49,20 +49,47 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             setMessage({ type: 'error', text: error.message });
           }
         } else if (data.user) {
+          console.log('REGISTERING USER - acceptedMarketing:', acceptedMarketing);
+          
+          const insertData = {
+            id: data.user.id,
+            email: data.user.email,
+            is_pro: false,
+            total_generations: 0,
+            accepted_terms: true,
+            accepted_marketing: acceptedMarketing,
+            terms_accepted_at: new Date().toISOString()
+          };
+          
+          console.log('INSERT DATA:', insertData);
+          
           const { error: insertError } = await supabase
             .from('users')
-            .insert([{
-              id: data.user.id,
-              email: data.user.email,
-              is_pro: false,
-              total_generations: 0,
-              accepted_terms: true,
-              accepted_marketing: acceptedMarketing,
-              terms_accepted_at: new Date().toISOString()
-            }]);
+            .insert([insertData]);
 
-          if (insertError && !insertError.message.includes('duplicate')) {
+          if (insertError) {
             console.error('Error creating user record:', insertError);
+            
+            // Si falla porque el usuario ya existe, intentar UPDATE
+            if (insertError.message.includes('duplicate')) {
+              console.log('User exists, updating marketing preference...');
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({ 
+                  accepted_marketing: acceptedMarketing,
+                  accepted_terms: true,
+                  terms_accepted_at: new Date().toISOString()
+                })
+                .eq('id', data.user.id);
+              
+              if (updateError) {
+                console.error('Error updating user:', updateError);
+              } else {
+                console.log('Updated marketing preference successfully');
+              }
+            }
+          } else {
+            console.log('User created successfully with marketing:', acceptedMarketing);
           }
 
           if (data.session) {
