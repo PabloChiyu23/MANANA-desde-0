@@ -54,8 +54,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         * Apropiación de las culturas a través de la lectura y la escritura
         * Artes y experiencias estéticas
       - El PDA debe:
-        * Describir un proceso, no un contenido
-        * Comenzar con un verbo en tercera persona
+        * Describir un PROCESO FORMATIVO, NO una actividad
+        * Redactarlo en tercera persona del singular (ej: "Reconoce", "Valora", "Explora")
+        * NUNCA usar "Los estudiantes..." o "El alumno..."
+        * Ejemplo INCORRECTO: "Los estudiantes investigan y representan a un personaje"
+        * Ejemplo CORRECTO: "Reconoce y valora a distintos personajes de la Revolución Mexicana mediante la exploración de sus acciones y la representación simbólica de sus experiencias"
         * Ser coherente con el grado y la edad
       - Ajusta el lenguaje pedagógico según el nivel:
         * Preescolar: vivencial, juego, exploración
