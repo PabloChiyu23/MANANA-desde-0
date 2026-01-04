@@ -4,9 +4,10 @@ import React from 'react';
 interface LandingPageProps {
   onStart: () => void;
   onUpgrade: () => void;
+  isLoggedIn?: boolean;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStart, onUpgrade }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStart, onUpgrade, isLoggedIn = false }) => {
   return (
     <div className="bg-white min-h-screen selection:bg-green-100 selection:text-green-900">
       {/* Hero Section */}
@@ -26,12 +27,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onUpgrade }) => {
               onClick={onStart}
               className="px-10 py-5 bg-green-600 hover:bg-green-700 text-white text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all w-full sm:w-auto"
             >
-              🚀 Probar gratis ahora
+              {isLoggedIn ? '✨ Generar mi clase' : '🚀 Probar gratis ahora'}
             </button>
           </div>
-          <p className="mt-4 text-gray-400 text-xs font-bold uppercase tracking-widest">
-            Sin compromisos · Sin registrar tarjetas · 100% Docente
-          </p>
+          {!isLoggedIn && (
+            <p className="mt-4 text-gray-400 text-xs font-bold uppercase tracking-widest">
+              Sin compromisos · Sin registrar tarjetas · 100% Docente
+            </p>
+          )}
         </div>
         
         <div className="absolute top-0 left-0 w-64 h-64 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>

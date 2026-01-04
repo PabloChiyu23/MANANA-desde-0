@@ -606,7 +606,7 @@ const App: React.FC = () => {
   };
 
   if (view === 'landing') {
-    return <LandingPage onStart={() => setView('generator')} onUpgrade={handleUpgradeClick} />;
+    return <LandingPage onStart={() => setView('generator')} onUpgrade={handleUpgradeClick} isLoggedIn={!!userEmail} />;
   }
 
   return (
