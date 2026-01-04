@@ -1,21 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-interface LessonParams {
-  grade: string;
-  topic: string;
-  duration: string;
-  status: string;
-  tone: string;
-  groupSize: string;
-  narrative: string;
-  customNarrative?: string;
-}
-
 interface PromptParams {
   topic: string;
   grade: string;
@@ -188,7 +170,7 @@ CARACTERÍSTICAS ESPECÍFICAS PARA SECUNDARIA (Fase 6):
 - Priorizar el análisis crítico y la acción transformadora
 `;
 
-function detectEducationalLevel(grade: string): 'preescolar' | 'primaria' | 'secundaria' {
+export function detectEducationalLevel(grade: string): 'preescolar' | 'primaria' | 'secundaria' {
   const gradeLower = grade.toLowerCase();
   if (gradeLower.includes('preescolar') || gradeLower.includes('kinder') || gradeLower.includes('jardín')) {
     return 'preescolar';
@@ -199,7 +181,7 @@ function detectEducationalLevel(grade: string): 'preescolar' | 'primaria' | 'sec
   return 'primaria';
 }
 
-function getPhase(grade: string): string {
+export function getPhase(grade: string): string {
   const gradeLower = grade.toLowerCase();
   if (gradeLower.includes('preescolar') || gradeLower.includes('kinder')) {
     return 'Fase 2';
@@ -221,7 +203,7 @@ function getPhase(grade: string): string {
   return 'Fase 4';
 }
 
-function buildSystemPrompt(params: PromptParams, chosenNarrative: string, narrativeInstruction: string): string {
+export function buildSystemPrompt(params: PromptParams, chosenNarrative: string, narrativeInstruction: string): string {
   const level = detectEducationalLevel(params.grade);
   const phase = getPhase(params.grade);
   
@@ -257,48 +239,4 @@ ${FORMAT_RULES}
 
 ${getStructure(params, chosenNarrative)}
 `;
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const params: LessonParams = req.body;
-    
-    const chosenNarrative = params.narrative === 'Personalizada' ? params.customNarrative : params.narrative;
-    const narrativeInstruction = params.narrative === 'Random' 
-      ? "SE EXTREMADAMENTE CREATIVO: Elige una narrativa sorpresa (ciencia ficción, espionaje, etc.) para toda la clase."
-      : `Toda la clase debe girar en torno a la narrativa: "${chosenNarrative}". Adapta el lenguaje y las dinámicas a este tema.`;
-
-    const level = detectEducationalLevel(params.grade);
-    const phase = getPhase(params.grade);
-    console.log(`Generating lesson for: ${level} (${phase}) - ${params.grade}`);
-
-    const systemInstruction = buildSystemPrompt(params, chosenNarrative || 'Sorpresa', narrativeInstruction);
-
-    const prompt = `Genera la planeación para el tema "${params.topic}" dirigida a ${params.grade} con un enfoque ${params.tone}. El grupo está ${params.status}. Usa la narrativa: ${chosenNarrative || 'libre'}.`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.8,
-      max_tokens: 4000,
-    });
-
-    const text = response.choices[0]?.message?.content || "";
-    
-    if (text.includes("SEGURIDAD_BLOQUEADA")) {
-      return res.status(400).json({ error: "El tema o la narrativa elegida no es apta para un entorno escolar por razones de seguridad." });
-    }
-    
-    return res.status(200).json({ content: text || "No pude generar la clase." });
-  } catch (error: any) {
-    console.error("Error de generación:", error);
-    return res.status(500).json({ error: "Error al conectar con la IA de planeación." });
-  }
 }
