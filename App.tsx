@@ -205,25 +205,12 @@ const App: React.FC = () => {
               }
             }
             
-            const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
+            // Supabase es siempre la fuente de verdad para usuarios logueados
             const supabaseGens = userData.total_generations;
-            
-            // Si localStorage tiene más generaciones, actualizar Supabase
-            if (localGens > supabaseGens) {
-              console.log('LOCAL HAS MORE GENERATIONS, SYNCING TO SUPABASE:', localGens);
-              await supabase
-                .from('users')
-                .update({ total_generations: localGens })
-                .eq('id', session.user.id);
-              setTotalGenerations(localGens);
-              setIsPro(effectiveIsPro);
-            } else {
-              // Supabase es la fuente de verdad
-              setIsPro(effectiveIsPro);
-              setTotalGenerations(supabaseGens);
-              localStorage.setItem('manana_total_generations', supabaseGens.toString());
-              console.log('SET TOTAL GENERATIONS TO:', supabaseGens);
-            }
+            setIsPro(effectiveIsPro);
+            setTotalGenerations(supabaseGens);
+            localStorage.setItem('manana_total_generations', supabaseGens.toString());
+            console.log('SET TOTAL GENERATIONS FROM SUPABASE:', supabaseGens);
           } else if (userError?.code === 'PGRST116') {
             // Usuario no existe en la tabla - esperar a que AuthModal lo cree
             // O crear vía servidor si es necesario
