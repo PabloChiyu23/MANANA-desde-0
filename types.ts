@@ -15,6 +15,19 @@ export type GroupSize = '1-15' | '16-30' | '31-45' | '45+';
 
 export type NarrativeType = 'Random' | 'Misión Social' | 'Expedición' | 'Viaje Histórico' | 'Gran Misterio' | 'Eco-Aventura' | 'Taller de Inventores' | 'Olimpiada' | 'Personalizada';
 
+export type NEMFormality = 'automatico' | 'formal';
+
+export type NEMDecisionLevel = 'seguir' | 'elegir' | 'proponer';
+
+export type NEMEmphasis = 'inclusion' | 'convivencia' | 'comunidad' | 'pensamiento' | 'expresion' | 'identidad';
+
+export interface NEMParams {
+  formality: NEMFormality;
+  pedagogicalIntent?: string;
+  emphasis: NEMEmphasis[];
+  decisionLevel: NEMDecisionLevel;
+}
+
 export interface LessonParams {
   grade: Grade;
   topic: string;
@@ -24,6 +37,7 @@ export interface LessonParams {
   groupSize: GroupSize;
   narrative: NarrativeType;
   customNarrative?: string;
+  nemParams?: NEMParams;
 }
 
 export interface SavedLesson extends LessonParams {
