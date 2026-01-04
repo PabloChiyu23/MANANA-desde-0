@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { LessonParams, Grade, Duration, GroupStatus, LessonTone, GroupSize, NarrativeType, SUGGESTED_TOPICS } from '../types';
+import { LessonParams, Grade, Duration, GroupStatus, LessonTone, GroupSize, NarrativeType, SUGGESTED_TOPICS, NEMFormality, NEMDecisionLevel, NEMEmphasis } from '../types';
 
 interface LessonFormProps {
   params: LessonParams;
@@ -54,10 +54,49 @@ const tones: { value: LessonTone; label: string; icon: string }[] = [
   { value: 'Colaborativo', label: 'Equipos', icon: '🤝' }
 ];
 
+const nemEmphasisOptions: { value: NEMEmphasis; label: string }[] = [
+  { value: 'inclusion', label: 'Inclusión y diversidad' },
+  { value: 'convivencia', label: 'Convivencia y respeto' },
+  { value: 'comunidad', label: 'Comunidad y contexto local' },
+  { value: 'pensamiento', label: 'Pensamiento crítico' },
+  { value: 'expresion', label: 'Expresión emocional' },
+  { value: 'identidad', label: 'Identidad cultural' }
+];
+
+const nemDecisionOptions: { value: NEMDecisionLevel; label: string }[] = [
+  { value: 'seguir', label: 'Seguir indicaciones' },
+  { value: 'elegir', label: 'Elegir cómo expresarse' },
+  { value: 'proponer', label: 'Proponer soluciones' }
+];
+
 const LessonForm: React.FC<LessonFormProps> = ({ params, setParams, onSubmit, onUpgrade, isLoading, isPro }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showNEMSection, setShowNEMSection] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const nemParams = params.nemParams || {
+    formality: 'automatico' as NEMFormality,
+    pedagogicalIntent: '',
+    emphasis: [] as NEMEmphasis[],
+    decisionLevel: 'proponer' as NEMDecisionLevel
+  };
+
+  const handleNEMChange = (field: string, value: any) => {
+    setParams({
+      ...params,
+      nemParams: { ...nemParams, [field]: value }
+    });
+  };
+
+  const toggleEmphasis = (emp: NEMEmphasis) => {
+    const current = nemParams.emphasis || [];
+    if (current.includes(emp)) {
+      handleNEMChange('emphasis', current.filter(e => e !== emp));
+    } else if (current.length < 2) {
+      handleNEMChange('emphasis', [...current, emp]);
+    }
+  };
 
   const getSuggestions = () => {
     const input = params.topic.trim().toLowerCase();
@@ -264,6 +303,105 @@ const LessonForm: React.FC<LessonFormProps> = ({ params, setParams, onSubmit, on
           </div>
           
           <div className="h-px bg-gray-100 w-full"></div>
+        </div>
+      )}
+
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={() => setShowNEMSection(!showNEMSection)}
+          className="flex items-center gap-2 text-xs font-black text-green-600 hover:text-green-700 transition-colors uppercase tracking-widest group"
+        >
+          <span className={`transform transition-transform duration-300 ${showNEMSection ? 'rotate-180' : ''}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+            </svg>
+          </span>
+          Ajustes NEM (opcional)
+        </button>
+        <p className="text-[10px] text-gray-400 mt-1">Para mayor alineación curricular</p>
+      </div>
+
+      {showNEMSection && (
+        <div className="space-y-5 pt-2 animate-in fade-in slide-in-from-top-2 duration-300 bg-green-50/50 p-4 rounded-2xl border border-green-100">
+          <div>
+            <label className="block text-xs font-bold text-gray-600 mb-2">
+              📋 Nivel de formalidad
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleNEMChange('formality', 'automatico')}
+                className={`p-3 rounded-xl text-[11px] font-bold border transition-all ${
+                  nemParams.formality === 'automatico' ? selectedBtnClass : defaultBtnClass
+                }`}
+              >
+                Automático
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNEMChange('formality', 'formal')}
+                className={`p-3 rounded-xl text-[11px] font-bold border transition-all ${
+                  nemParams.formality === 'formal' ? selectedBtnClass : defaultBtnClass
+                }`}
+              >
+                Formal SEP
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-600 mb-2">
+              🧠 Intención pedagógica
+            </label>
+            <input
+              type="text"
+              value={nemParams.pedagogicalIntent || ''}
+              onChange={(e) => handleNEMChange('pedagogicalIntent', e.target.value)}
+              placeholder="Ej: reflexionar sobre un conflicto, valorar la diversidad..."
+              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white placeholder:text-gray-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-600 mb-2">
+              🌱 Énfasis social <span className="text-gray-400 font-normal">(máx. 2)</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {nemEmphasisOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleEmphasis(opt.value)}
+                  className={`p-2.5 rounded-xl text-[10px] font-bold border transition-all text-left ${
+                    nemParams.emphasis.includes(opt.value) ? 'bg-green-600 border-green-600 text-white' : defaultBtnClass
+                  }`}
+                >
+                  {nemParams.emphasis.includes(opt.value) ? '✓ ' : ''}{opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-600 mb-2">
+              🎯 Decisión del alumnado
+            </label>
+            <div className="grid grid-cols-1 gap-2">
+              {nemDecisionOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleNEMChange('decisionLevel', opt.value)}
+                  className={`p-3 rounded-xl text-[11px] font-bold border transition-all text-left ${
+                    nemParams.decisionLevel === opt.value ? selectedBtnClass : defaultBtnClass
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

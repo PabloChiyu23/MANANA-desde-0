@@ -42,7 +42,13 @@ const App: React.FC = () => {
     status: 'Mixto',
     tone: 'Divertido',
     groupSize: '16-30',
-    narrative: 'Random'
+    narrative: 'Random',
+    nemParams: {
+      formality: 'automatico',
+      pedagogicalIntent: '',
+      emphasis: [],
+      decisionLevel: 'proponer'
+    }
   });
 
   const [result, setResult] = useState<string | null>(null);
@@ -554,7 +560,13 @@ const App: React.FC = () => {
       tone: l.tone || 'Divertido',
       groupSize: l.groupSize || '16-30',
       narrative: l.narrative || 'Random',
-      customNarrative: l.customNarrative
+      customNarrative: l.customNarrative,
+      nemParams: l.nemParams || {
+        formality: 'automatico',
+        pedagogicalIntent: '',
+        emphasis: [],
+        decisionLevel: 'proponer'
+      }
     });
     setResult(l.content);
     setPlanBResult(null);

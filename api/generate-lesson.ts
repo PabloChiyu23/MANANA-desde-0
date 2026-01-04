@@ -5,6 +5,13 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+interface NEMParams {
+  formality?: 'automatico' | 'formal';
+  pedagogicalIntent?: string;
+  emphasis?: string[];
+  decisionLevel?: 'seguir' | 'elegir' | 'proponer';
+}
+
 interface LessonParams {
   grade: string;
   topic: string;
@@ -14,7 +21,23 @@ interface LessonParams {
   groupSize: string;
   narrative: string;
   customNarrative?: string;
+  nemParams?: NEMParams;
 }
+
+const emphasisLabels: Record<string, string> = {
+  'inclusion': 'Inclusión y diversidad',
+  'convivencia': 'Convivencia y respeto',
+  'comunidad': 'Comunidad y contexto local',
+  'pensamiento': 'Pensamiento crítico',
+  'expresion': 'Expresión emocional',
+  'identidad': 'Identidad cultural'
+};
+
+const decisionLabels: Record<string, string> = {
+  'seguir': 'Los alumnos siguen indicaciones del docente',
+  'elegir': 'Los alumnos eligen cómo expresarse o representar el aprendizaje',
+  'proponer': 'Los alumnos proponen soluciones, toman posturas o deciden acciones'
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -28,6 +51,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const narrativeInstruction = params.narrative === 'Random' 
       ? "SE EXTREMADAMENTE CREATIVO: Elige una narrativa sorpresa (ciencia ficción, espionaje, etc.) para toda la clase."
       : `Toda la clase debe girar en torno a la narrativa: "${chosenNarrative}". Adapta el lenguaje y las dinámicas a este tema.`;
+
+    const nem = params.nemParams || {};
+    const isFormal = nem.formality === 'formal';
+    
+    const emphasisText = nem.emphasis && nem.emphasis.length > 0
+      ? `ÉNFASIS SOCIAL SOLICITADO: ${nem.emphasis.map(e => emphasisLabels[e] || e).join(', ')}. Integra estos temas de manera natural en la clase.`
+      : '';
+    
+    const intentText = nem.pedagogicalIntent
+      ? `INTENCIÓN PEDAGÓGICA DEL DOCENTE: "${nem.pedagogicalIntent}". Usa esto para orientar el PDA y las actividades.`
+      : '';
+    
+    const decisionText = nem.decisionLevel
+      ? `NIVEL DE DECISIÓN DEL ALUMNADO: ${decisionLabels[nem.decisionLevel]}. Diseña la actividad central acorde a este nivel.`
+      : '';
+    
+    const formalityText = isFormal
+      ? 'MODO FORMAL SEP: Usa lenguaje técnico-pedagógico apropiado para revisión por supervisión o dirección. Sé preciso en términos NEM.'
+      : '';
 
     const systemInstruction = `
       Eres un asistente pedagógico experto en la Nueva Escuela Mexicana (Plan de Estudios 2022). Diseñas propuestas didácticas viables para el aula, contextualizadas al grupo, con enfoque humano, creativo y reflexivo, y alineables a la NEM, sin usar lenguaje burocrático innecesario.
@@ -67,6 +109,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         * Preescolar: vivencial, juego, exploración
         * Primaria: descubrimiento guiado, reflexión básica
         * Secundaria: análisis, argumentación, pensamiento crítico
+
+      ${formalityText}
+      ${intentText}
+      ${emphasisText}
+      ${decisionText}
 
       REGLAS DE FORMATO:
       - NO incluyas ninguna sección de "OBJETIVO DE APRENDIZAJE".
