@@ -55,10 +55,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         * Artes y experiencias estéticas
       - El PDA debe:
         * Describir un PROCESO FORMATIVO, NO una actividad
-        * Redactarlo en tercera persona del singular (ej: "Reconoce", "Valora", "Explora")
+        * Redactarlo en tercera persona del singular (ej: "Reconoce", "Valora", "Explora", "Analiza")
         * NUNCA usar "Los estudiantes..." o "El alumno..."
-        * Ejemplo INCORRECTO: "Los estudiantes investigan y representan a un personaje"
-        * Ejemplo CORRECTO: "Reconoce y valora a distintos personajes de la Revolución Mexicana mediante la exploración de sus acciones y la representación simbólica de sus experiencias"
+        * NUNCA mencionar productos específicos (mural, cartel, dibujo, exposición, etc.)
+        * NUNCA mencionar la actividad que se realizará en clase
+        * Ejemplo INCORRECTO: "Reconoce y valora... mediante la creación de un mural colectivo"
+        * Ejemplo CORRECTO: "Analiza y valora las causas y consecuencias de la Revolución Mexicana a partir del contraste de diversas perspectivas históricas, fortaleciendo su pensamiento crítico y su comprensión de los procesos sociales"
+        * Los productos y actividades van en la sección de ACTIVIDAD CENTRAL, NO en el PDA
         * Ser coherente con el grado y la edad
       - Ajusta el lenguaje pedagógico según el nivel:
         * Preescolar: vivencial, juego, exploración
