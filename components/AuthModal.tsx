@@ -51,26 +51,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         } else if (data.user) {
           console.log('REGISTERING USER - acceptedMarketing:', acceptedMarketing);
           
-          // Usar UPSERT para garantizar que se guarde el marketing preference
-          const { error: upsertError } = await supabase
-            .from('users')
-            .upsert({
-              id: data.user.id,
-              email: data.user.email,
-              is_pro: false,
-              total_generations: 0,
-              accepted_terms: true,
-              accepted_marketing: acceptedMarketing,
-              terms_accepted_at: new Date().toISOString()
-            }, { 
-              onConflict: 'id',
-              ignoreDuplicates: false 
+          // Usar el endpoint del servidor para evitar problemas de RLS
+          try {
+            const response = await fetch('/api/register-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: data.user.id,
+                email: data.user.email,
+                acceptedMarketing: acceptedMarketing
+              })
             });
-
-          if (upsertError) {
-            console.error('Error upserting user record:', upsertError);
-          } else {
-            console.log('User upserted successfully with marketing:', acceptedMarketing);
+            
+            const result = await response.json();
+            if (result.success) {
+              console.log('User registered via server with marketing:', acceptedMarketing);
+            } else {
+              console.error('Server register error:', result.error);
+            }
+          } catch (err) {
+            console.error('Error calling register-user endpoint:', err);
           }
 
           if (data.session) {

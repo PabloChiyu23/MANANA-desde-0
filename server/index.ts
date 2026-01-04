@@ -299,6 +299,57 @@ apiRouter.get('/subscription-price', (req, res) => {
   });
 });
 
+// Endpoint para registrar usuario con marketing consent (usa service key, sin RLS)
+apiRouter.post('/register-user', async (req, res) => {
+  console.log('API: Received register-user request');
+  try {
+    const { userId, email, acceptedMarketing } = req.body;
+    
+    if (!userId || !email) {
+      return res.status(400).json({ error: 'userId and email are required' });
+    }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase credentials not configured');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log('Upserting user with acceptedMarketing:', acceptedMarketing);
+
+    const { error } = await supabase
+      .from('users')
+      .upsert({
+        id: userId,
+        email: email,
+        is_pro: false,
+        total_generations: 0,
+        accepted_terms: true,
+        accepted_marketing: acceptedMarketing === true,
+        terms_accepted_at: new Date().toISOString()
+      }, { 
+        onConflict: 'id'
+      });
+
+    if (error) {
+      console.error('Error upserting user:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    console.log('User registered successfully with marketing:', acceptedMarketing);
+    return res.json({ success: true });
+
+  } catch (error: any) {
+    console.error('Register user error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 apiRouter.post('/cancel-subscription', async (req, res) => {
   console.log('API: Received cancel-subscription request');
   try {
