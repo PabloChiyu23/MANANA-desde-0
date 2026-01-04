@@ -32,8 +32,7 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 │   ├── PaymentModal.tsx
 │   └── ProPanel.tsx
 ├── lib/
-│   ├── supabase.ts      # Supabase client
-│   └── prompts.ts       # AI system prompts by educational level
+│   └── supabase.ts      # Supabase client
 ├── server/
 │   └── index.ts         # Express dev server with Vite middleware
 ├── services/
@@ -110,25 +109,6 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 ### Required Environment Variables for Payments
 - `MERCADOPAGO_ACCESS_TOKEN`: Backend (production: APP_USR-xxx)
 - `VITE_MERCADOPAGO_PUBLIC_KEY`: Frontend (production: APP_USR-xxx)
-
-## AI Prompts System
-The lesson generator uses level-specific prompts that automatically detect the educational level from the grade selection:
-
-### Levels and Phases
-- **Preescolar (Fase 2)**: 1°, 2°, 3° Preescolar
-- **Primaria**: Fase 3 (1°-2°), Fase 4 (3°-4°), Fase 5 (5°-6°)
-- **Secundaria (Fase 6)**: 1°, 2°, 3° Secundaria
-
-### NEM Compliance
-All prompts enforce:
-- **4 Campos Formativos**: Lenguajes, Saberes y Pensamiento Científico, Ética Naturaleza y Sociedades, De lo Humano y lo Comunitario
-- **7 Ejes Articuladores**: Inclusión, Pensamiento Crítico, Interculturalidad Crítica, Igualdad de Género, Vida Saludable, Lectura/Escritura, Artes y Experiencias Estéticas
-- **Prohibitions**: No traditional subjects, no 2011/2017 competencies, no old learning expectations
-
-### Level-Specific Characteristics
-- **Preescolar**: Ludic approach, short activities (10-15 min), body movement, songs/rhymes
-- **Primaria**: Community projects, collaborative work, age-appropriate duration (15-25 min)
-- **Secundaria**: Critical thinking, debates, real-world projects, student autonomy
 
 ## Development
 - **Port**: 5000
