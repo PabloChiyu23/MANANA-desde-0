@@ -44,6 +44,11 @@ function verifyMercadoPagoSignature(req: VercelRequest): boolean {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Aceptar GET para pruebas de Mercado Pago
+  if (req.method === 'GET') {
+    return res.status(200).json({ status: 'ok', message: 'Webhook endpoint is working' });
+  }
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
