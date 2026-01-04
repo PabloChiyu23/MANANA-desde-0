@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import PrivacyPolicy from './PrivacyPolicy';
+import TermsConditions from './TermsConditions';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,6 +17,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedMarketing, setAcceptedMarketing] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   if (!isOpen) return null;
 
@@ -25,6 +31,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
     try {
       if (mode === 'register') {
+        if (!acceptedTerms) {
+          setMessage({ type: 'error', text: 'Debes aceptar el Aviso de Privacidad y los Términos y Condiciones.' });
+          setIsSubmitting(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -43,7 +55,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
               id: data.user.id,
               email: data.user.email,
               is_pro: false,
-              total_generations: 0
+              total_generations: 0,
+              accepted_terms: true,
+              accepted_marketing: acceptedMarketing,
+              terms_accepted_at: new Date().toISOString()
             }]);
 
           if (insertError && !insertError.message.includes('duplicate')) {
@@ -151,6 +166,42 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
               </div>
             )}
 
+            {mode === 'register' && (
+              <div className="space-y-3 text-sm pt-2">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
+                  />
+                  <span className="text-gray-600 leading-snug text-xs">
+                    He leído y acepto el{' '}
+                    <button type="button" onClick={() => setShowPrivacy(true)} className="text-green-600 hover:text-green-800 underline font-medium">
+                      Aviso de Privacidad
+                    </button>{' '}
+                    y los{' '}
+                    <button type="button" onClick={() => setShowTerms(true)} className="text-green-600 hover:text-green-800 underline font-medium">
+                      Términos y Condiciones
+                    </button>
+                    <span className="text-red-500 ml-1">*</span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptedMarketing}
+                    onChange={(e) => setAcceptedMarketing(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
+                  />
+                  <span className="text-gray-500 leading-snug text-xs">
+                    Quiero recibir novedades y consejos por correo (opcional)
+                  </span>
+                </label>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isSubmitting}
@@ -193,6 +244,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           </div>
         </div>
       </div>
+
+      {showPrivacy && <PrivacyPolicy isModal onClose={() => setShowPrivacy(false)} />}
+      {showTerms && <TermsConditions isModal onClose={() => setShowTerms(false)} />}
     </div>
   );
 };

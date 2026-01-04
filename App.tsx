@@ -12,6 +12,8 @@ import PaymentModal from './components/PaymentModal';
 import CancellationModal from './components/CancellationModal';
 import AuthModal from './components/AuthModal';
 import ResetPasswordModal from './components/ResetPasswordModal';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsConditions from './components/TermsConditions';
 import { generateLessonContent, generatePlanBContent } from './services/ai';
 
 const FREE_WITHOUT_EMAIL_LIMIT = 1;
@@ -30,6 +32,8 @@ const App: React.FC = () => {
   const [isPendingGeneration, setIsPendingGeneration] = useState<boolean>(false);
   const [isPendingUpgrade, setIsPendingUpgrade] = useState<boolean>(false);
   const [totalGenerations, setTotalGenerations] = useState<number>(0);
+  const [showPrivacy, setShowPrivacy] = useState<boolean>(false);
+  const [showTerms, setShowTerms] = useState<boolean>(false);
   
   const [params, setParams] = useState<LessonParams>({
     grade: '1° Primaria',
@@ -711,8 +715,24 @@ const App: React.FC = () => {
 
       <footer className="mt-20 py-12 text-center text-gray-400 text-sm border-t border-gray-100">
         <div className="mb-4 font-black text-green-600/50 uppercase tracking-widest text-lg">MAÑANA</div>
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <button onClick={() => setShowPrivacy(true)} className="hover:text-gray-600 transition-colors underline">
+            Aviso de Privacidad
+          </button>
+          <span>•</span>
+          <button onClick={() => setShowTerms(true)} className="hover:text-gray-600 transition-colors underline">
+            Términos y Condiciones
+          </button>
+          <span>•</span>
+          <a href="mailto:hola@manana.app" className="hover:text-gray-600 transition-colors underline">
+            Contacto
+          </a>
+        </div>
         <p>© {new Date().getFullYear()} MAÑANA - Hecho con ❤️ para maestros de México 🇲🇽</p>
       </footer>
+
+      {showPrivacy && <PrivacyPolicy isModal onClose={() => setShowPrivacy(false)} />}
+      {showTerms && <TermsConditions isModal onClose={() => setShowTerms(false)} />}
     </div>
   );
 };
