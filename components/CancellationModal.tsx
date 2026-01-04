@@ -34,6 +34,11 @@ const CancellationModal: React.FC<CancellationModalProps> = ({ isOpen, onClose, 
             <div>
               <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">Lamentamos que te vayas</h3>
               <p className="text-gray-500 mt-1 italic text-sm">Ayúdanos a mejorar MAÑANA.</p>
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                <p className="text-blue-700 text-xs font-medium">
+                  ℹ️ Mantendrás acceso PRO hasta el final de tu período pagado.
+                </p>
+              </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

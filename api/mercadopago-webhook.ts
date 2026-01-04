@@ -94,16 +94,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
       
       const isPro = subscription.status === 'authorized';
+      const nextPaymentDate = subscription.next_payment_date;
+      
+      const updateData: any = {
+        is_pro: isPro,
+        subscription_id: subscription.id,
+        subscription_status: subscription.status,
+        subscription_price: subscription.auto_recurring?.transaction_amount,
+        updated_at: new Date().toISOString(),
+      };
+      
+      if (nextPaymentDate) {
+        updateData.subscription_end_date = nextPaymentDate;
+      }
       
       const { error: updateError } = await supabase
         .from('users')
-        .update({
-          is_pro: isPro,
-          subscription_id: subscription.id,
-          subscription_status: subscription.status,
-          subscription_price: subscription.auto_recurring?.transaction_amount,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', userId);
 
       if (updateError) {

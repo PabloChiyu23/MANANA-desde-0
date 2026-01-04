@@ -96,15 +96,33 @@ const App: React.FC = () => {
           })));
         }
 
-        // Cargar datos de usuario (pro, generaciones)
+        // Cargar datos de usuario (pro, generaciones, suscripción)
         const { data: userData } = await supabase
           .from('users')
-          .select('is_pro, total_generations')
+          .select('is_pro, total_generations, subscription_status, subscription_end_date')
           .eq('id', session.user.id)
           .single();
         
         if (userData) {
-          setIsPro(userData.is_pro);
+          let effectiveIsPro = userData.is_pro;
+          
+          // Si la suscripción fue cancelada, verificar si el período ya terminó
+          if (userData.subscription_status === 'cancelled' && userData.subscription_end_date) {
+            const endDate = new Date(userData.subscription_end_date);
+            const now = new Date();
+            
+            if (now > endDate) {
+              // El período pagado terminó, quitar PRO
+              effectiveIsPro = false;
+              // Actualizar en la base de datos
+              await supabase
+                .from('users')
+                .update({ is_pro: false, updated_at: new Date().toISOString() })
+                .eq('id', session.user.id);
+            }
+          }
+          
+          setIsPro(effectiveIsPro);
           setTotalGenerations(userData.total_generations);
         }
       } else {
@@ -156,7 +174,7 @@ const App: React.FC = () => {
         try {
           const userQueryPromise = supabase
             .from('users')
-            .select('is_pro, total_generations')
+            .select('is_pro, total_generations, subscription_status, subscription_end_date')
             .eq('id', session.user.id)
             .single();
           
@@ -171,6 +189,22 @@ const App: React.FC = () => {
           console.log('USER DATA FROM SUPABASE:', userData, 'ERROR:', userError);
         
           if (userData) {
+            let effectiveIsPro = userData.is_pro;
+            
+            // Si la suscripción fue cancelada, verificar si el período ya terminó
+            if (userData.subscription_status === 'cancelled' && userData.subscription_end_date) {
+              const endDate = new Date(userData.subscription_end_date);
+              const now = new Date();
+              
+              if (now > endDate) {
+                effectiveIsPro = false;
+                await supabase
+                  .from('users')
+                  .update({ is_pro: false, updated_at: new Date().toISOString() })
+                  .eq('id', session.user.id);
+              }
+            }
+            
             const localGens = parseInt(localStorage.getItem('manana_total_generations') || '0', 10);
             const supabaseGens = userData.total_generations;
             
@@ -182,10 +216,10 @@ const App: React.FC = () => {
                 .update({ total_generations: localGens })
                 .eq('id', session.user.id);
               setTotalGenerations(localGens);
-              setIsPro(userData.is_pro);
+              setIsPro(effectiveIsPro);
             } else {
               // Supabase es la fuente de verdad
-              setIsPro(userData.is_pro);
+              setIsPro(effectiveIsPro);
               setTotalGenerations(supabaseGens);
               localStorage.setItem('manana_total_generations', supabaseGens.toString());
               console.log('SET TOTAL GENERATIONS TO:', supabaseGens);
