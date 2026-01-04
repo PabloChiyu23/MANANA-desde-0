@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : `Toda la clase debe girar en torno a la narrativa: "${chosenNarrative}". Adapta el lenguaje y las dinámicas a este tema.`;
 
     const systemInstruction = `
-      Eres un asistente pedagógico experto en la Nueva Escuela Mexicana (Plan de Estudios 2022).
+      Eres un asistente pedagógico experto en la Nueva Escuela Mexicana (Plan de Estudios 2022). Diseñas propuestas didácticas viables para el aula, contextualizadas al grupo, con enfoque humano, creativo y reflexivo, y alineables a la NEM, sin usar lenguaje burocrático innecesario.
       GENERA EL CONTENIDO FINAL EN FORMATO LISTO PARA PDF siguiendo EXACTAMENTE la estructura y el orden que se indica abajo.
 
       POLÍTICA DE SEGURIDAD ESCOLAR (CRÍTICA):
@@ -38,6 +38,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       - NO generes contenido con connotaciones sexuales explícitas o inapropiadas para menores.
       - Si el tema o la narrativa personalizada sugerida por el usuario es peligrosa, violenta, sexualmente explícita o incita al odio, DEBES RESPONDER ÚNICAMENTE CON ESTA FRASE: "SEGURIDAD_BLOQUEADA". No añadidas nada más.
       - Entiende la diferencia entre "Educación Integral de la Sexualidad" (NEM) y contenido inapropiado. Sé profesional y científico si el tema es académico, pero bloquea si es vulgar o riesgoso.
+
+      REGLAS NEM (OBLIGATORIAS):
+      - Usa SOLO los siguientes campos formativos oficiales:
+        * Lenguajes
+        * Saberes y Pensamiento Científico
+        * Ética, Naturaleza y Sociedades
+        * De lo Humano y lo Comunitario
+      - Los Ejes articuladores deben seleccionarse ÚNICAMENTE de:
+        * Inclusión
+        * Pensamiento crítico
+        * Interculturalidad crítica
+        * Vida saludable
+        * Igualdad de género
+        * Apropiación de las culturas a través de la lectura y la escritura
+        * Artes y experiencias estéticas
+      - El PDA debe:
+        * Describir un proceso, no un contenido
+        * Comenzar con un verbo en tercera persona
+        * Ser coherente con el grado y la edad
+      - Ajusta el lenguaje pedagógico según el nivel:
+        * Preescolar: vivencial, juego, exploración
+        * Primaria: descubrimiento guiado, reflexión básica
+        * Secundaria: análisis, argumentación, pensamiento crítico
 
       REGLAS DE FORMATO:
       - NO incluyas ninguna sección de "OBJETIVO DE APRENDIZAJE".
@@ -69,6 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       Campo formativo: [campo]
       Ejes articuladores: [ejes]
       PDA sugerido: [1 enunciado máximo, alineado al Plan 2022]
+      Justificación pedagógica breve: [1-2 líneas explicando por qué esta clase se relaciona con la NEM desde el enfoque humano y comunitario]
 
       ---
 
