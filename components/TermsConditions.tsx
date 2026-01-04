@@ -86,7 +86,7 @@ export default function TermsConditions({ onClose, isModal = false }: TermsCondi
       <section className="mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-3">8. Contacto</h2>
         <p className="text-gray-600">
-          Si tienes dudas sobre estos términos, escríbenos a: <strong>hola@manana.app</strong>
+          Si tienes dudas sobre estos términos, escríbenos a: <strong>plopezhelu@gmail.com</strong>
         </p>
       </section>
     </div>

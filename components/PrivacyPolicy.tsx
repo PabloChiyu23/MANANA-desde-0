@@ -73,7 +73,7 @@ export default function PrivacyPolicy({ onClose, isModal = false }: PrivacyPolic
           <li><strong>Oponerte</strong> al uso de tus datos para ciertos fines</li>
         </ul>
         <p className="text-gray-600 mt-3">
-          Para ejercer cualquiera de estos derechos, envía un correo a: <strong>privacidad@manana.app</strong>
+          Para ejercer cualquiera de estos derechos, envía un correo a: <strong>plopezhelu@gmail.com</strong>
         </p>
       </section>
 
