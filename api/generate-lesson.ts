@@ -107,6 +107,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       – Acción concreta 2
       – Acción concreta 3
 
+      Pregunta problematizadora (NEM):
+      "[Pregunta abierta que invite a reflexionar sobre el tema, conectando con la vida o experiencias de los alumnos]"
+
       Qué decir:
       "Frase literal breve y motivadora para iniciar la sesión bajo la narrativa"
 
@@ -125,6 +128,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       4. Acción concreta
       5. Acción concreta
 
+      Decisión del grupo (pensamiento crítico):
+      "[Momento donde el grupo debe tomar una decisión, interpretar o elegir cómo abordar algo - no solo ejecutar]"
+
       ---
 
       ## CIERRE / EVALUACIÓN ([minutos sugeridos])
@@ -134,6 +140,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       – Qué observar
       – Pregunta clave
       – Evidencia concreta del aprendizaje
+
+      Conexión pasado-presente (NEM):
+      "[Pregunta que conecte el tema con la vida actual de los alumnos, ej: ¿Qué podemos aprender hoy de...?]"
 
       ---
 
