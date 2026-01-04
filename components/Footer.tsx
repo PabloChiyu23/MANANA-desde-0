@@ -31,7 +31,7 @@ export default function Footer({ onShowPrivacy, onShowTerms }: FooterProps) {
               Términos y Condiciones
             </button>
             <a
-              href="mailto:hola@manana.app"
+              href="mailto:plopezhelu@gmail.com"
               className="hover:text-white transition-colors"
             >
               Contacto

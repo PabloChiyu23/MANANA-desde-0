@@ -280,6 +280,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onUpgrade, isLoggedI
                 <p className="text-lg font-bold">WhatsApp 2229816798</p>
               </div>
             </div>
+            <a href="mailto:plopezhelu@gmail.com" className="flex items-center gap-3 group">
+              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center group-hover:bg-green-500/20 transition-all">
+                <span className="text-green-500">✉️</span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-0.5">Correo</p>
+                <p className="text-lg font-bold">plopezhelu@gmail.com</p>
+              </div>
+            </a>
           </div>
           <div className="h-px bg-white/5 w-full mb-8"></div>
           <p className="text-sm text-gray-500 font-medium">
