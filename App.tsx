@@ -637,7 +637,7 @@ const App: React.FC = () => {
           <div className="grid grid-cols-1 gap-8">
             <div className="order-1">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight italic">MAÑANA</h2>
+                <h2 className="text-3xl font-black text-green-600 tracking-tight">MAÑANA</h2>
                 <p className="text-gray-500 font-medium">Planeaciones rápidas alineadas a la NEM.</p>
                 
                 {!isPro && (
