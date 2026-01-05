@@ -80,6 +80,33 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 - With account: 10 classes
 - PRO: Unlimited
 
+## NEM Alignment Rules
+### Campos Formativos (only 4 official)
+1. **Lenguajes** - Comunicación, expresión, lectura, escritura, oralidad, artes
+2. **Saberes y Pensamiento Científico** - Ciencias naturales, matemáticas, experimentos
+3. **Ética, Naturaleza y Sociedades** - Historia, cultura, tradiciones, normas, derechos
+4. **De lo Humano y lo Comunitario** - Emociones, convivencia, bienestar, juego
+
+### Campo Assignment Rules (SEP Gold Rule)
+- HISTORIA → Ética, Naturaleza y Sociedades
+- Fenómenos naturales / matemáticas → Saberes y Pensamiento Científico
+- Comunicar, narrar, expresar artísticamente → Lenguajes
+- Emociones / convivencia → De lo Humano y lo Comunitario
+
+### Ejes Articuladores (only 7 official)
+- Inclusión
+- Pensamiento crítico
+- Interculturalidad crítica
+- Vida saludable
+- Igualdad de género
+- Apropiación de las culturas a través de la lectura y la escritura
+- Artes y experiencias estéticas
+
+### PDA Rules
+- Describe formative PROCESS, not activity
+- Third person singular verbs (Reconoce, Analiza, Valora)
+- NEVER mention products (mural, cartel, etc.) or activities
+
 ## Payment Flow (Checkout Bricks + Subscriptions)
 1. User clicks "Upgrade to PRO"
 2. PaymentModal opens with Mercado Pago Bricks form (in-app)

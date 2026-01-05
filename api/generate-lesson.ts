@@ -87,6 +87,69 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         * Saberes y Pensamiento Científico
         * Ética, Naturaleza y Sociedades
         * De lo Humano y lo Comunitario
+
+      MAPA CONTENIDO → CAMPO FORMATIVO (REGLA ORO SEP):
+      Nunca inventar campos formativos por el tema. Siempre decidir por el TIPO DE CONOCIMIENTO que se trabaja.
+
+      📚 LENGUAJES - Todo lo que implique comunicación, expresión y comprensión:
+         • Lectura (cuentos, textos informativos, leyendas, instrucciones)
+         • Escritura (relatos, descripciones, opiniones)
+         • Oralidad (debate, exposición, narración)
+         • Producción de textos
+         • Lengua indígena
+         • Lenguaje artístico (teatro, música, danza, artes visuales)
+         • Narrativas, historias, símbolos
+         • Comprensión lectora, escucha activa
+         • Ejemplos: Leyendas de Puebla, Carteles informativos, Contar historias con dibujos, Dramatizaciones, Canciones tradicionales
+         • NO va aquí: Historia como proceso social, Ciencia natural, Matemáticas
+
+      🔬 SABERES Y PENSAMIENTO CIENTÍFICO - Explicar el mundo natural y matemático:
+         • Ciencias naturales
+         • Matemáticas
+         • Tecnología básica
+         • Observación, medición, experimentación
+         • Datos, hipótesis, evidencias
+         • Cuerpo humano (anatomía, fisiología)
+         • Ecosistemas, Energía, materia
+         • Pensamiento lógico
+         • Ejemplos: Ciclo de vida de plantas/animales, Mariposa monarca, El agua y sus estados, Fracciones, Experimentos sencillos
+         • NO va aquí: Historia, Cultura, Convivencia social
+
+      🏛️ ÉTICA, NATURALEZA Y SOCIEDADES - La vida social, histórica y comunitaria:
+         • Historia (local, nacional, mundial)
+         • Conflictos sociales
+         • Cultura y tradiciones
+         • Identidad
+         • Normas y gobierno
+         • Economía básica
+         • Migración
+         • Derechos humanos
+         • Análisis social
+         • Relación sociedad–naturaleza
+         • Ejemplos: Guerra de los Pasteles, Independencia de México, Identidad poblana, Talavera, Comunidad, Reglas de convivencia, Cuidado del entorno desde lo social
+         • NO va aquí: Experimentos científicos, Operaciones matemáticas
+
+      💚 DE LO HUMANO Y LO COMUNITARIO - Emociones, cuerpo, bienestar y relaciones:
+         • Emociones y autoconocimiento
+         • Autoestima y empatía
+         • Convivencia
+         • Resolución de conflictos
+         • Vida saludable
+         • Juego
+         • Cuerpo y movimiento (educación física enfocada en bienestar)
+         • Educación socioemocional
+         • Ejemplos: ¿Cómo me siento?, Trabajo en equipo, Resolución pacífica de conflictos, Cuidado del cuerpo, Hábitos saludables
+         • NO va aquí: Historia, Ciencia, Matemáticas
+
+      ATAJOS CLAVE PARA ASIGNAR CAMPO:
+      - Si es HISTORIA → Ética, Naturaleza y Sociedades
+      - Si explica fenómenos naturales o usa matemáticas → Saberes y Pensamiento Científico
+      - Si comunica, narra o expresa artísticamente → Lenguajes
+      - Si trabaja emociones o convivencia → De lo Humano y lo Comunitario
+
+      CASOS MIXTOS: Elige el campo según el ENFOQUE PRINCIPAL de la clase. Puedes mencionar transversalidad si aplica.
+      Ejemplo: Talavera con enfoque cultural → Ética, Naturaleza y Sociedades. Talavera con enfoque en dibujar y narrar → Lenguajes.
+
       - Los Ejes articuladores deben seleccionarse ÚNICAMENTE de:
         * Inclusión
         * Pensamiento crítico
