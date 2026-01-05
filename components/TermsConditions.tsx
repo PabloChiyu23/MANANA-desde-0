@@ -75,7 +75,24 @@ export default function TermsConditions({ onClose, isModal = false }: TermsCondi
       </section>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">7. Limitación de responsabilidad</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">7. Límites de uso y disponibilidad</h2>
+        <div className="text-gray-600 space-y-2">
+          <p>MAÑANA utiliza servicios de inteligencia artificial de terceros para generar contenido. Esto implica que:</p>
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            <li><strong>Uso razonable:</strong> La suscripción PRO permite generar clases de forma amplia para uso docente personal. 
+            No está diseñada para uso automatizado, reventa de contenido o generación masiva con fines comerciales.</li>
+            <li><strong>Disponibilidad:</strong> El servicio depende de proveedores externos de IA. En caso de 
+            interrupciones técnicas, trabajaremos para restaurar el servicio lo antes posible.</li>
+            <li><strong>Límites técnicos:</strong> Nos reservamos el derecho de implementar límites de uso razonable 
+            (por ejemplo, número de generaciones por hora) para garantizar la calidad del servicio para todos los usuarios.</li>
+            <li><strong>Política de uso justo:</strong> Si detectamos un uso anormal o abusivo que afecte el servicio, 
+            nos pondremos en contacto contigo antes de tomar cualquier acción.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">8. Limitación de responsabilidad</h2>
         <p className="text-gray-600">
           MAÑANA se proporciona "tal cual". No garantizamos que el servicio esté disponible en todo momento 
           ni que esté libre de errores. No somos responsables por pérdidas o daños derivados del uso 
@@ -84,7 +101,7 @@ export default function TermsConditions({ onClose, isModal = false }: TermsCondi
       </section>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">8. Contacto</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">9. Contacto</h2>
         <p className="text-gray-600">
           Si tienes dudas sobre estos términos, escríbenos a: <strong>plopezhelu@gmail.com</strong>
         </p>
