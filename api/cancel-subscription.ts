@@ -81,6 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { error: updateError } = await supabase
       .from('users')
       .update({
+        is_pro: false,
         subscription_status: 'cancelled',
         updated_at: new Date().toISOString()
       })

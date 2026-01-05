@@ -411,6 +411,7 @@ apiRouter.post('/cancel-subscription', async (req, res) => {
     const { error: updateError } = await supabase
       .from('users')
       .update({
+        is_pro: false,
         subscription_status: 'cancelled',
         updated_at: new Date().toISOString()
       })
@@ -424,7 +425,7 @@ apiRouter.post('/cancel-subscription', async (req, res) => {
     console.log('Subscription cancelled successfully for user:', userId);
     return res.json({ 
       success: true, 
-      message: 'Tu suscripción ha sido cancelada. Mantendrás acceso PRO hasta el final de tu período pagado.' 
+      message: 'Tu suscripción ha sido cancelada.' 
     });
 
   } catch (error: any) {
