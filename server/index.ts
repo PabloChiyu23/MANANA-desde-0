@@ -54,7 +54,7 @@ apiRouter.post('/generate-lesson', async (req, res) => {
       ESTRUCTURA EXACTA A SEGUIR:
 
       # PLANEACIÓN DIDÁCTICA NEM
-      Generado por MAÑANA · ${new Date().toLocaleDateString('es-MX')}
+      Generado por MAÑANA · ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}
 
       ---
 

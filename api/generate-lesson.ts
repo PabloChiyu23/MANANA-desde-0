@@ -210,7 +210,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ESTRUCTURA EXACTA A SEGUIR:
 
       # PLANEACIÓN DIDÁCTICA NEM
-      Generado por MAÑANA · ${new Date().toLocaleDateString('es-MX')}
+      Generado por MAÑANA · ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}
 
       ---
 
