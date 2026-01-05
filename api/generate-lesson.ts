@@ -168,10 +168,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         * Ejemplo CORRECTO: "Analiza y valora las causas y consecuencias de la Revolución Mexicana a partir del contraste de diversas perspectivas históricas, fortaleciendo su pensamiento crítico y su comprensión de los procesos sociales"
         * Los productos y actividades van en la sección de ACTIVIDAD CENTRAL, NO en el PDA
         * Ser coherente con el grado y la edad
-      - Ajusta el lenguaje pedagógico según el nivel:
-        * Preescolar: vivencial, juego, exploración
-        * Primaria: descubrimiento guiado, reflexión básica
-        * Secundaria: análisis, argumentación, pensamiento crítico
+
+      🎚️ SELECTOR DE RIGOR COGNITIVO POR GRADO (REGLA MADRE NEM):
+      A mayor grado escolar, mayor nivel de decisión, análisis y responsabilidad social del alumno.
+
+      🧒 PREESCOLAR - Pensamiento exploratorio-simbólico (siente, imagina, juega, nombra):
+         ✔ DEBE haber: Juego simbólico, imitación, expresión corporal/oral, elección simple (me gusta/no me gusta)
+         ✖ NO se exige: Análisis, argumentación, causas y consecuencias formales
+         Decisión NEM válida: "¿Qué animal te gustó más y por qué?"
+
+      🌱 PRIMARIA BAJA (1°-3°) - Pensamiento descriptivo-relacional (reconoce, describe, compara):
+         ✔ DEBE haber: Pregunta problematizadora simple, relación básica (esto pasa porque...), trabajo colaborativo, representación gráfica o narrativa
+         ✖ NO se exige: Postura ética compleja, debate formal
+         Decisión NEM válida: "¿Qué cambiaría si esto no existiera?"
+
+      🌿 PRIMARIA ALTA (4°-6°) - Pensamiento analítico inicial-crítico guiado (analiza, explica, propone):
+         ✔ DEBE haber: Problema real o comunitario, causa-consecuencia, propuesta de solución, conexión pasado-presente
+         ✖ YA NO es suficiente: Solo juego, solo dramatización, solo cuento
+         Decisión NEM sólida: "¿Qué podemos hacer para mejorar esta situación en nuestra comunidad?"
+
+      🔬 SECUNDARIA - Pensamiento crítico-argumentativo (investiga, debate, toma postura):
+         ✔ DEBE haber: Investigación breve, posturas distintas, argumentos con razones, impacto social/ambiental
+         ✖ NO es aceptable: Actividad sin conflicto, respuesta única, solo exposición
+         Decisión NEM fuerte: "¿Qué postura consideras más justa y por qué?"
 
       ${formalityText}
       ${intentText}

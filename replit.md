@@ -107,6 +107,12 @@ MAÑANA is a lesson planning application for teachers in Spanish-speaking countr
 - Third person singular verbs (Reconoce, Analiza, Valora)
 - NEVER mention products (mural, cartel, etc.) or activities
 
+### Cognitive Rigor by Grade (SEP Gold Rule)
+- **Preescolar**: Exploratory-symbolic (play, imitate, feel, name). Simple choices only.
+- **Primaria Baja (1°-3°)**: Descriptive-relational (recognize, describe, compare). Simple cause-effect.
+- **Primaria Alta (4°-6°)**: Analytical-critical guided (analyze, explain, propose). Real problems, solutions.
+- **Secundaria**: Critical-argumentative (investigate, debate, take positions). Multiple perspectives required.
+
 ## Payment Flow (Checkout Bricks + Subscriptions)
 1. User clicks "Upgrade to PRO"
 2. PaymentModal opens with Mercado Pago Bricks form (in-app)
