@@ -18,8 +18,7 @@ const FavoriteLessons: React.FC<FavoriteLessonsProps> = ({ favorites, isPro, onS
   if (favorites.length === 0) return null;
 
   const FREE_LIMIT = 3;
-  const visibleFavorites = isPro ? favorites : favorites.slice(0, FREE_LIMIT);
-  const lockedCount = Math.max(0, favorites.length - FREE_LIMIT);
+  const isOverLimit = !isPro && favorites.length > FREE_LIMIT;
 
   const startEditing = (e: React.MouseEvent, lesson: SavedLesson) => {
     e.stopPropagation();
@@ -51,8 +50,25 @@ const FavoriteLessons: React.FC<FavoriteLessonsProps> = ({ favorites, isPro, onS
         )}
       </div>
 
+      {isOverLimit && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">📚</span>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                Tienes {favorites.length} clases guardadas (límite gratis: {FREE_LIMIT})
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                Conservas acceso a todas tus clases, pero no puedes guardar nuevas hasta que elimines algunas o 
+                <button onClick={onUpgrade} className="text-green-600 font-bold hover:underline ml-1">vuelvas a PRO</button>.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4">
-        {visibleFavorites.map((lesson) => (
+        {favorites.map((lesson) => (
           <div 
             key={lesson.id}
             className="flex items-center justify-between p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group animate-in slide-in-from-left-2"
@@ -108,20 +124,6 @@ const FavoriteLessons: React.FC<FavoriteLessonsProps> = ({ favorites, isPro, onS
           </div>
         ))}
 
-        {!isPro && lockedCount > 0 && (
-          <button 
-            onClick={onUpgrade}
-            className="relative group overflow-hidden p-6 bg-slate-100 rounded-3xl border-2 border-dashed border-slate-200 transition-all hover:border-green-400 hover:bg-slate-50 text-center"
-          >
-            <div className="relative z-10">
-              <div className="text-2xl mb-2">🔒</div>
-              <div className="font-black text-slate-400 group-hover:text-green-600 transition-colors uppercase tracking-tight text-sm">
-                Tienes {lockedCount} {lockedCount === 1 ? 'clase' : 'clases'} bloqueadas
-              </div>
-              <div className="text-[10px] text-slate-400 font-bold mt-1">Sube a PRO para desbloquear tu historial ilimitado</div>
-            </div>
-          </button>
-        )}
       </div>
     </div>
   );

@@ -442,8 +442,7 @@ const App: React.FC = () => {
     }
 
     if (!isPro && favorites.length >= MAX_FREE_FAVORITES) {
-      alert(`Has llegado al límite de guardado gratuito (${MAX_FREE_FAVORITES} clases). Sube a PRO para biblioteca ilimitada.`);
-      handleUpgradeClick();
+      alert(`Tienes ${favorites.length} clases guardadas (límite gratis: ${MAX_FREE_FAVORITES}). Para guardar más, elimina algunas clases de tu biblioteca o vuelve a PRO.`);
       return;
     }
 

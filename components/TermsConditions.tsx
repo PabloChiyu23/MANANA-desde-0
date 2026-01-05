@@ -71,6 +71,9 @@ export default function TermsConditions({ onClose, isModal = false }: TermsCondi
           Al cancelar, mantienes acceso PRO hasta el final del período pagado.</p>
           <p><strong>Reembolsos:</strong> No ofrecemos reembolsos por períodos parciales, pero puedes 
           seguir usando el servicio hasta que termine tu mes pagado.</p>
+          <p><strong>Clases guardadas al cancelar:</strong> Si cancelas tu suscripción PRO, conservas acceso 
+          a todas las clases que hayas guardado. Podrás verlas y descargarlas, pero no podrás guardar nuevas 
+          clases hasta que elimines algunas (el límite gratuito es de 3 clases) o reactives tu suscripción.</p>
         </div>
       </section>
 
